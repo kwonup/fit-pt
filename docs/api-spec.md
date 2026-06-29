@@ -83,6 +83,7 @@ FastAPI는 토큰을 검증하고 `user_id`를 추출합니다 (`app/core/deps.p
     "id": "uuid",
     "workout_date": "2026-06-29",
     "workout_type": "weight",
+    "title": "저녁 등 워크아웃",
     "duration_minutes": 60,
     "memo": "",
     "ai_recommendation_id": null,
@@ -101,9 +102,9 @@ FastAPI는 토큰을 검증하고 `user_id`를 추출합니다 (`app/core/deps.p
 ```json
 {
   "workout_date": "2026-06-29",
+  "title": "저녁 등 워크아웃",
   "duration_minutes": 60,
   "memo": "컨디션 좋음",
-  "muscle_group": "등",
   "ai_recommendation_id": null,
   "exercises": [
     {
@@ -118,7 +119,7 @@ FastAPI는 토큰을 검증하고 `user_id`를 추출합니다 (`app/core/deps.p
 }
 ```
 
-> MVP에서는 `muscle_group`을 세션 입력값으로 받아 모든 `exercises`에 동일하게 저장합니다. AI 추천 JSON은 `name`을 사용하고, 실제 기록 생성 API로 보낼 때 `exercise_name`으로 매핑합니다.
+> `title`은 모든 운동 타입 공통 **필수** 필드입니다(생성 시). AI 추천 JSON은 `name`을 사용하고, 실제 기록 생성 API로 보낼 때 `exercise_name`으로 매핑합니다.
 
 **Response:** 생성된 Session 객체 (status 201)
 
@@ -129,6 +130,7 @@ FastAPI는 토큰을 검증하고 `user_id`를 추출합니다 (`app/core/deps.p
 ```json
 {
   "workout_date": "2026-06-29",
+  "title": "아침 인터벌 러닝",
   "distance_km": 5.0,
   "duration_minutes": 40,
   "avg_pace": "8:00",
@@ -142,11 +144,31 @@ FastAPI는 토큰을 검증하고 `user_id`를 추출합니다 (`app/core/deps.p
 
 **Response:** 생성된 Session 객체 (status 201)
 
+### POST /workouts/other
+기타 운동 기록 생성. 웨이트/러닝에 속하지 않는 운동을 자유 서술로 기록.
+
+**Request Body**
+```json
+{
+  "workout_date": "2026-06-29",
+  "title": "주말 클라이밍",
+  "content": "실내 클라이밍 1시간, 볼더링 V3 5개 완등",
+  "duration_minutes": 60,
+  "memo": "",
+  "ai_recommendation_id": null
+}
+```
+
+> `content`는 필수입니다. 별도 `other_sessions` 테이블에 저장됩니다.
+
+**Response:** 생성된 Session 객체 (status 201)
+
 ### PUT /workouts/{session_id}
 운동 세션의 공통 필드 수정. 본인 기록만 수정 가능.
 
 **현재 MVP 수정 가능 필드**
 - `workout_date`
+- `title`
 - `duration_minutes`
 - `memo`
 

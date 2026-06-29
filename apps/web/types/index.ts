@@ -2,7 +2,7 @@
 export type Persona = 'angel' | 'tiger'
 
 // 운동 타입
-export type WorkoutType = 'weight' | 'running'
+export type WorkoutType = 'weight' | 'running' | 'other'
 
 // 숙련도
 export type FitnessLevel = '초보' | '중급' | '고급'
@@ -25,6 +25,7 @@ export interface WorkoutSession {
   id: string
   workout_date: string
   workout_type: WorkoutType
+  title: string | null
   duration_minutes: number | null
   memo: string | null
   ai_recommendation_id: string | null
@@ -41,10 +42,15 @@ export interface WorkoutSet {
 // 저장된 웨이트 종목
 export interface RecordedWeightExercise {
   id: string
-  muscle_group: MuscleGroup
+  muscle_group: MuscleGroup | null
   exercise_name: string
   order_index: number
   sets: WorkoutSet[]
+}
+
+// 기타 세션 상세
+export interface OtherSessionDetail extends WorkoutSession {
+  content: string
 }
 
 // 웨이트 세션 상세

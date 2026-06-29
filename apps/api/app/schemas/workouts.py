@@ -22,15 +22,16 @@ class WeightExerciseCreate(BaseModel):
 
 class WeightWorkoutCreate(BaseModel):
     workout_date: date
+    title: str = Field(min_length=1, max_length=100)
     duration_minutes: int | None = Field(default=None, ge=1)
     memo: str | None = None
-    muscle_group: MuscleGroup
     ai_recommendation_id: str | None = None
     exercises: list[WeightExerciseCreate] = Field(min_length=1)
 
 
 class RunningWorkoutCreate(BaseModel):
     workout_date: date
+    title: str = Field(min_length=1, max_length=100)
     distance_km: float = Field(gt=0)
     duration_minutes: int = Field(ge=1)
     avg_pace: str | None = None
@@ -47,7 +48,17 @@ class RunningWorkoutCreate(BaseModel):
         return self
 
 
+class OtherWorkoutCreate(BaseModel):
+    workout_date: date
+    title: str = Field(min_length=1, max_length=100)
+    content: str = Field(min_length=1)
+    duration_minutes: int | None = Field(default=None, ge=1)
+    memo: str | None = None
+    ai_recommendation_id: str | None = None
+
+
 class WorkoutSessionUpdate(BaseModel):
     workout_date: date | None = None
+    title: str | None = Field(default=None, max_length=100)
     duration_minutes: int | None = Field(default=None, ge=1)
     memo: str | None = None

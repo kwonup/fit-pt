@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
-import { MUSCLE_GROUPS } from '@/lib/constants'
-import type { MuscleGroup, WorkoutType } from '@/types'
+import type { WorkoutType } from '@/types'
 
 type SetInput = { weight_kg: string; reps: string }
 type ExerciseInput = { exercise_name: string; sets: SetInput[] }
@@ -16,17 +15,29 @@ const today = () => new Date().toISOString().slice(0, 10)
 const newSet = (): SetInput => ({ weight_kg: '', reps: '' })
 const newExercise = (): ExerciseInput => ({ exercise_name: '', sets: [newSet()] })
 
+const TYPE_LABELS: Record<WorkoutType, string> = {
+  weight: '웨이트트레이닝',
+  running: '러닝',
+  other: '기타',
+}
+
+const TITLE_PLACEHOLDERS: Record<WorkoutType, string> = {
+  weight: '예: 저녁 등 워크아웃',
+  running: '예: 아침 인터벌 러닝',
+  other: '예: 주말 클라이밍',
+}
+
 export default function NewWorkoutPage() {
   const router = useRouter()
 
   const [type, setType] = useState<WorkoutType>('weight')
+  const [title, setTitle] = useState('')
   const [date, setDate] = useState(today)
   const [memo, setMemo] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // 웨이트
-  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('가슴')
   const [weightDuration, setWeightDuration] = useState('')
   const [exercises, setExercises] = useState<ExerciseInput[]>([newExercise()])
 
@@ -35,6 +46,10 @@ export default function NewWorkoutPage() {
   const [runDuration, setRunDuration] = useState('')
   const [pace, setPace] = useState('')
   const [intensity, setIntensity] = useState<Intensity | ''>('')
+
+  // 기타
+  const [otherContent, setOtherContent] = useState('')
+  const [otherDuration, setOtherDuration] = useState('')
 
   function updateExercise(i: number, patch: Partial<ExerciseInput>) {
     setExercises((prev) => prev.map((ex, idx) => (idx === i ? { ...ex, ...patch } : ex)))
@@ -71,9 +86,9 @@ export default function NewWorkoutPage() {
       '/workouts/weight',
       {
         workout_date: date,
+        title: title.trim(),
         duration_minutes: weightDuration === '' ? null : Number(weightDuration),
         memo: memo || null,
-        muscle_group: muscleGroup,
         exercises: cleaned,
       },
       token
@@ -92,10 +107,29 @@ export default function NewWorkoutPage() {
       '/workouts/running',
       {
         workout_date: date,
+        title: title.trim(),
         distance_km: Number(distance),
         duration_minutes: Number(runDuration),
         avg_pace: pace || undefined,
         intensity: intensity || undefined,
+        memo: memo || null,
+      },
+      token
+    )
+  }
+
+  async function submitOther(token: string) {
+    if (!otherContent.trim()) {
+      throw new Error('운동 내용을 입력해주세요.')
+    }
+
+    await apiClient.post(
+      '/workouts/other',
+      {
+        workout_date: date,
+        title: title.trim(),
+        content: otherContent.trim(),
+        duration_minutes: otherDuration === '' ? null : Number(otherDuration),
         memo: memo || null,
       },
       token
@@ -107,6 +141,12 @@ export default function NewWorkoutPage() {
     setLoading(true)
     setError(null)
 
+    if (!title.trim()) {
+      setError('운동 제목을 입력해주세요.')
+      setLoading(false)
+      return
+    }
+
     const token = await getAccessToken()
     if (!token) {
       router.replace('/login')
@@ -115,7 +155,8 @@ export default function NewWorkoutPage() {
 
     try {
       if (type === 'weight') await submitWeight(token)
-      else await submitRunning(token)
+      else if (type === 'running') await submitRunning(token)
+      else await submitOther(token)
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
@@ -134,7 +175,7 @@ export default function NewWorkoutPage() {
       </header>
 
       <div className="mb-6 flex gap-2">
-        {(['weight', 'running'] as WorkoutType[]).map((t) => (
+        {(['weight', 'running', 'other'] as WorkoutType[]).map((t) => (
           <button
             type="button"
             key={t}
@@ -145,12 +186,25 @@ export default function NewWorkoutPage() {
                 : 'border-gray-300 text-gray-700 hover:border-gray-400'
             }`}
           >
-            {t === 'weight' ? '웨이트트레이닝' : '러닝'}
+            {TYPE_LABELS[t]}
           </button>
         ))}
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <section>
+          <label className="mb-1 block text-sm font-medium text-gray-900">운동 제목</label>
+          <input
+            type="text"
+            required
+            maxLength={100}
+            placeholder={TITLE_PLACEHOLDERS[type]}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+          />
+        </section>
+
         <section>
           <label className="mb-1 block text-sm font-medium text-gray-900">날짜</label>
           <input
@@ -162,23 +216,8 @@ export default function NewWorkoutPage() {
           />
         </section>
 
-        {type === 'weight' ? (
+        {type === 'weight' && (
           <>
-            <section>
-              <label className="mb-1 block text-sm font-medium text-gray-900">운동 부위</label>
-              <select
-                value={muscleGroup}
-                onChange={(e) => setMuscleGroup(e.target.value as MuscleGroup)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
-              >
-                {MUSCLE_GROUPS.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </section>
-
             <section className="flex flex-col gap-4">
               <label className="block text-sm font-medium text-gray-900">운동 종목</label>
               {exercises.map((ex, ei) => (
@@ -271,7 +310,9 @@ export default function NewWorkoutPage() {
               />
             </section>
           </>
-        ) : (
+        )}
+
+        {type === 'running' && (
           <>
             <section>
               <label className="mb-1 block text-sm font-medium text-gray-900">거리 (km)</label>
@@ -328,6 +369,35 @@ export default function NewWorkoutPage() {
                   </button>
                 ))}
               </div>
+            </section>
+          </>
+        )}
+
+        {type === 'other' && (
+          <>
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">운동 내용</label>
+              <textarea
+                rows={4}
+                required
+                placeholder="예: 실내 클라이밍 1시간, 볼더링 V3 5개 완등"
+                value={otherContent}
+                onChange={(e) => setOtherContent(e.target.value)}
+                className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+            </section>
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+                총 운동 시간 (분, 선택)
+              </label>
+              <input
+                type="number"
+                min={1}
+                placeholder="예: 60"
+                value={otherDuration}
+                onChange={(e) => setOtherDuration(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
             </section>
           </>
         )}

@@ -3,7 +3,12 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.core.deps import get_current_user_id, get_supabase
-from app.schemas.workouts import RunningWorkoutCreate, WeightWorkoutCreate, WorkoutSessionUpdate
+from app.schemas.workouts import (
+    OtherWorkoutCreate,
+    RunningWorkoutCreate,
+    WeightWorkoutCreate,
+    WorkoutSessionUpdate,
+)
 from supabase import Client
 
 router = APIRouter()
@@ -65,6 +70,15 @@ async def get_workout(
             .execute()
         )
         session["running"] = running_result.data
+    elif session["workout_type"] == "other":
+        other_result = (
+            supabase.table("other_sessions")
+            .select("content")
+            .eq("session_id", session_id)
+            .single()
+            .execute()
+        )
+        session["other"] = other_result.data
 
     return session
 
@@ -81,6 +95,7 @@ async def create_weight_workout(
             "user_id": user_id,
             "workout_date": body.workout_date.isoformat(),
             "workout_type": "weight",
+            "title": body.title,
             "duration_minutes": body.duration_minutes,
             "memo": body.memo,
             "ai_recommendation_id": body.ai_recommendation_id,
@@ -92,7 +107,6 @@ async def create_weight_workout(
         for exercise in body.exercises:
             exercise_payload = {
                 "session_id": session_id,
-                "muscle_group": body.muscle_group,
                 "exercise_name": exercise.exercise_name,
                 "order_index": exercise.order_index,
             }
@@ -132,6 +146,7 @@ async def create_running_workout(
             "user_id": user_id,
             "workout_date": body.workout_date.isoformat(),
             "workout_type": "running",
+            "title": body.title,
             "duration_minutes": body.duration_minutes,
             "memo": body.memo,
             "ai_recommendation_id": body.ai_recommendation_id,
@@ -158,6 +173,39 @@ async def create_running_workout(
         if session_id is not None:
             supabase.table("workout_sessions").delete().eq("id", session_id).eq("user_id", user_id).execute()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="러닝 기록 저장에 실패했습니다.") from exc
+
+
+@router.post("/other", status_code=status.HTTP_201_CREATED)
+async def create_other_workout(
+    body: OtherWorkoutCreate,
+    user_id: str = Depends(get_current_user_id),
+    supabase: Client = Depends(get_supabase),
+):
+    session_id = None
+    try:
+        session_payload = {
+            "user_id": user_id,
+            "workout_date": body.workout_date.isoformat(),
+            "workout_type": "other",
+            "title": body.title,
+            "duration_minutes": body.duration_minutes,
+            "memo": body.memo,
+            "ai_recommendation_id": body.ai_recommendation_id,
+        }
+        session = supabase.table("workout_sessions").insert(session_payload).execute().data[0]
+        session_id = session["id"]
+        other = (
+            supabase.table("other_sessions")
+            .insert({"session_id": session_id, "content": body.content})
+            .execute()
+            .data[0]
+        )
+        session["other"] = other
+        return session
+    except Exception as exc:
+        if session_id is not None:
+            supabase.table("workout_sessions").delete().eq("id", session_id).eq("user_id", user_id).execute()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="기타 기록 저장에 실패했습니다.") from exc
 
 
 @router.put("/{session_id}")
