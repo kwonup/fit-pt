@@ -1,5 +1,14 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit & { token?: string } = {}
@@ -14,10 +23,17 @@ async function apiFetch<T>(
   const res = await fetch(`${API_BASE_URL}${path}`, { ...fetchOptions, headers })
 
   if (!res.ok) {
-    const error = await res.text()
-    throw new Error(error || `API error: ${res.status}`)
+    let message = `API error: ${res.status}`
+    try {
+      const body = await res.json()
+      if (body?.detail) message = body.detail
+    } catch {
+      // 응답 본문이 JSON이 아니면 기본 메시지 사용
+    }
+    throw new ApiError(res.status, message)
   }
 
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
