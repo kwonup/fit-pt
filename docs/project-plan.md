@@ -61,8 +61,9 @@ Next.js: 추천 카드 렌더링 + "운동반영하기" 버튼
 - [x] FastAPI /workouts/weight POST 1차 구현
 - [x] FastAPI /workouts/running POST 1차 구현
 - [x] 운동 기록 상세 조회 / 공통 필드 수정 / 삭제 1차 구현
-- [ ] 월간 캘린더 (웨이트/러닝 색상 구분)
-- [ ] 날짜 클릭 → 기록 이동 (1개: 상세, 복수: 목록)
+- [x] 월간 캘린더 (웨이트/러닝/기타 색상 구분) — `/calendar`
+- [x] 날짜 클릭 → 해당 날짜 기록 목록 → 상세 이동 (`/workouts/[id]`)
+- [x] 기록 상세 화면 (타입별 렌더링) + 삭제
 
 ### Phase 4 — AI 챗봇
 - [ ] FastAPI /chat POST 구현

@@ -65,6 +65,32 @@ export interface RunningSessionDetail extends WorkoutSession {
   intensity: '낮음' | '보통' | '높음' | null
 }
 
+// 기록 상세 조회 응답 (GET /workouts/{id})
+export interface DetailWeightExercise {
+  id: string
+  muscle_group: MuscleGroup | null
+  exercise_name: string
+  order_index: number
+  weight_sets: WorkoutSet[]
+}
+
+export interface RunningDetail {
+  distance_km: number | null
+  duration_minutes: number | null
+  avg_pace: string | null
+  intensity: '낮음' | '보통' | '높음' | null
+}
+
+export interface OtherDetail {
+  content: string
+}
+
+export interface WorkoutDetail extends WorkoutSession {
+  exercises?: DetailWeightExercise[]
+  running?: RunningDetail
+  other?: OtherDetail
+}
+
 // AI 추천 세트
 export interface RecommendedWeightSet extends WorkoutSet {
   rest_seconds?: number

@@ -1,4 +1,4 @@
-import type { FitnessLevel, MuscleGroup, Persona } from '@/types'
+import type { FitnessLevel, MuscleGroup, Persona, WorkoutType } from '@/types'
 
 export const FITNESS_GOALS = [
   '체중 감량',
@@ -24,6 +24,15 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
   '코어',
   '전신',
 ]
+
+export const WORKOUT_TYPE_META: Record<
+  WorkoutType,
+  { label: string; dot: string; badge: string }
+> = {
+  weight: { label: '웨이트', dot: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
+  running: { label: '러닝', dot: 'bg-green-500', badge: 'bg-green-100 text-green-700' },
+  other: { label: '기타', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700' },
+}
 
 export const PERSONAS: { code: Persona; name: string; description: string }[] = [
   {
