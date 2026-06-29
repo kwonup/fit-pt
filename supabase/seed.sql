@@ -1,0 +1,25 @@
+-- 개발용 초기 데이터 (seed.sql)
+-- 실제 auth.users 레코드가 있어야 삽입 가능합니다.
+-- 아래 주석을 해제하고 UUID를 개발 환경의 테스트 유저 ID로 교체하세요.
+
+-- 테스트 유저 프로필 예시
+-- INSERT INTO user_profiles (id, fitness_goals, fitness_level, main_workout_type, weekly_frequency, caution_areas, persona)
+-- VALUES (
+--   'your-test-user-uuid-here',
+--   ARRAY['근력 향상', '운동 습관 형성'],
+--   '중급',
+--   '웨이트트레이닝',
+--   4,
+--   ARRAY['허리'],
+--   'tiger'
+-- );
+
+-- 운동 세션 예시 (테스트 유저 ID 교체 필요)
+-- INSERT INTO workout_sessions (user_id, workout_date, workout_type, duration_minutes, memo)
+-- VALUES (
+--   'your-test-user-uuid-here',
+--   CURRENT_DATE - INTERVAL '2 days',
+--   'weight',
+--   60,
+--   '등 운동 - 컨디션 좋음'
+-- );
