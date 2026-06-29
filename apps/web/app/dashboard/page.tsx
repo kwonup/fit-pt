@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ApiError, apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/client'
@@ -93,18 +94,29 @@ export default function DashboardPage() {
       <nav className="grid gap-3">
         {[
           { label: 'AI 코치에게 루틴 받기', href: '/chat', soon: true },
-          { label: '운동 기록하기', href: '/workouts/new', soon: true },
+          { label: '운동 기록하기', href: '/workouts/new', soon: false },
           { label: '캘린더', href: '/calendar', soon: true },
           { label: '마이페이지', href: '/mypage', soon: true },
-        ].map((item) => (
-          <div
-            key={item.href}
-            className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-400"
-          >
-            <span>{item.label}</span>
-            {item.soon && <span className="text-xs">준비 중</span>}
-          </div>
-        ))}
+        ].map((item) =>
+          item.soon ? (
+            <div
+              key={item.href}
+              className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-400"
+            >
+              <span>{item.label}</span>
+              <span className="text-xs">준비 중</span>
+            </div>
+          ) : (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center justify-between rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition hover:border-gray-900"
+            >
+              <span>{item.label}</span>
+              <span className="text-gray-400">→</span>
+            </Link>
+          )
+        )}
       </nav>
     </main>
   )

@@ -56,8 +56,8 @@ Next.js: 추천 카드 렌더링 + "운동반영하기" 버튼
 - [ ] FastAPI 인증 토큰 검증 통합 테스트 (실제 Supabase 연결 후)
 
 ### Phase 3 — 운동 기록 CRUD
-- [ ] 웨이트트레이닝 기록 작성 UI (종목 추가, 세트/중량/반복 입력)
-- [ ] 러닝 기록 작성 UI (거리/시간 입력 → 페이스 자동 계산)
+- [x] 웨이트트레이닝 기록 작성 UI (종목 추가, 세트/중량/반복 입력) — `/workouts/new`
+- [x] 러닝 기록 작성 UI (거리/시간 입력 → 페이스 자동 계산) — `/workouts/new`
 - [x] FastAPI /workouts/weight POST 1차 구현
 - [x] FastAPI /workouts/running POST 1차 구현
 - [x] 운동 기록 상세 조회 / 공통 필드 수정 / 삭제 1차 구현
