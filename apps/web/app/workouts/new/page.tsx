@@ -3,16 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { X } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import type { WorkoutType } from '@/types'
-import { Button, buttonVariants } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type SetInput = { weight_kg: string; reps: string }
 type ExerciseInput = { exercise_name: string; sets: SetInput[] }
@@ -175,141 +168,145 @@ export default function NewWorkoutPage() {
   return (
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">운동 기록</h1>
-        <Link href="/dashboard" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+        <h1 className="text-2xl font-bold text-gray-900">운동 기록</h1>
+        <Link href="/dashboard" className="text-sm text-gray-500 hover:underline">
           취소
         </Link>
       </header>
 
-      <Tabs value={type} onValueChange={(v) => setType(v as WorkoutType)} className="mb-6">
-        <TabsList className="w-full">
-          {(['weight', 'running', 'other'] as WorkoutType[]).map((t) => (
-            <TabsTrigger key={t} value={t} className="flex-1">
-              {TYPE_LABELS[t]}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <div className="mb-6 flex gap-2">
+        {(['weight', 'running', 'other'] as WorkoutType[]).map((t) => (
+          <button
+            type="button"
+            key={t}
+            onClick={() => setType(t)}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+              type === t
+                ? 'border-gray-900 bg-gray-900 text-white'
+                : 'border-gray-300 text-gray-700 hover:border-gray-400'
+            }`}
+          >
+            {TYPE_LABELS[t]}
+          </button>
+        ))}
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <section className="flex flex-col gap-1.5">
-          <Label htmlFor="title">운동 제목</Label>
-          <Input
-            id="title"
+        <section>
+          <label className="mb-1 block text-sm font-medium text-gray-900">운동 제목</label>
+          <input
+            type="text"
             required
             maxLength={100}
             placeholder={TITLE_PLACEHOLDERS[type]}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
           />
         </section>
 
-        <section className="flex flex-col gap-1.5">
-          <Label htmlFor="date">날짜</Label>
-          <Input
-            id="date"
+        <section>
+          <label className="mb-1 block text-sm font-medium text-gray-900">날짜</label>
+          <input
             type="date"
             required
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
           />
         </section>
 
         {type === 'weight' && (
           <>
             <section className="flex flex-col gap-4">
-              <Label>운동 종목</Label>
+              <label className="block text-sm font-medium text-gray-900">운동 종목</label>
               {exercises.map((ex, ei) => (
-                <Card key={ei} size="sm">
-                  <CardContent className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        placeholder="종목명 (예: 벤치프레스)"
-                        value={ex.exercise_name}
-                        onChange={(e) => updateExercise(ei, { exercise_name: e.target.value })}
-                      />
-                      {exercises.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setExercises((p) => p.filter((_, i) => i !== ei))}
-                        >
-                          삭제
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      {ex.sets.map((s, si) => (
-                        <div key={si} className="flex items-center gap-2 text-sm">
-                          <span className="w-12 text-muted-foreground">{si + 1}세트</span>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.5"
-                            placeholder="kg"
-                            value={s.weight_kg}
-                            onChange={(e) => updateSet(ei, si, { weight_kg: e.target.value })}
-                            className="w-20"
-                          />
-                          <span className="text-muted-foreground">kg ×</span>
-                          <Input
-                            type="number"
-                            min={0}
-                            placeholder="회"
-                            value={s.reps}
-                            onChange={(e) => updateSet(ei, si, { reps: e.target.value })}
-                            className="w-20"
-                          />
-                          <span className="text-muted-foreground">회</span>
-                          {ex.sets.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              className="ml-auto"
-                              onClick={() =>
-                                updateExercise(ei, { sets: ex.sets.filter((_, i) => i !== si) })
-                              }
-                            >
-                              <X />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      <Button
+                <div key={ei} className="rounded-xl border border-gray-200 p-3">
+                  <div className="mb-3 flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="종목명 (예: 벤치프레스)"
+                      value={ex.exercise_name}
+                      onChange={(e) => updateExercise(ei, { exercise_name: e.target.value })}
+                      className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                    />
+                    {exercises.length > 1 && (
+                      <button
                         type="button"
-                        variant="link"
-                        size="sm"
-                        className="self-start px-0"
-                        onClick={() => updateExercise(ei, { sets: [...ex.sets, newSet()] })}
+                        onClick={() => setExercises((p) => p.filter((_, i) => i !== ei))}
+                        className="text-sm text-gray-400 hover:text-red-600"
                       >
-                        + 세트 추가
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                        삭제
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {ex.sets.map((s, si) => (
+                      <div key={si} className="flex items-center gap-2 text-sm">
+                        <span className="w-12 text-gray-500">{si + 1}세트</span>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.5"
+                          placeholder="kg"
+                          value={s.weight_kg}
+                          onChange={(e) => updateSet(ei, si, { weight_kg: e.target.value })}
+                          className="w-20 rounded-lg border border-gray-300 px-2 py-1.5 focus:border-gray-900 focus:outline-none"
+                        />
+                        <span className="text-gray-400">kg ×</span>
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="회"
+                          value={s.reps}
+                          onChange={(e) => updateSet(ei, si, { reps: e.target.value })}
+                          className="w-20 rounded-lg border border-gray-300 px-2 py-1.5 focus:border-gray-900 focus:outline-none"
+                        />
+                        <span className="text-gray-400">회</span>
+                        {ex.sets.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateExercise(ei, { sets: ex.sets.filter((_, i) => i !== si) })
+                            }
+                            className="ml-auto text-gray-400 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => updateExercise(ei, { sets: [...ex.sets, newSet()] })}
+                      className="self-start text-xs text-gray-500 hover:underline"
+                    >
+                      + 세트 추가
+                    </button>
+                  </div>
+                </div>
               ))}
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                className="self-start border-dashed"
                 onClick={() => setExercises((p) => [...p, newExercise()])}
+                className="self-start rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-600 hover:border-gray-400"
               >
                 + 종목 추가
-              </Button>
+              </button>
             </section>
 
-            <section className="flex flex-col gap-1.5">
-              <Label htmlFor="w-duration">총 운동 시간 (분, 선택)</Label>
-              <Input
-                id="w-duration"
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+                총 운동 시간 (분, 선택)
+              </label>
+              <input
                 type="number"
                 min={1}
                 placeholder="예: 60"
                 value={weightDuration}
                 onChange={(e) => setWeightDuration(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
               />
             </section>
           </>
@@ -317,10 +314,9 @@ export default function NewWorkoutPage() {
 
         {type === 'running' && (
           <>
-            <section className="flex flex-col gap-1.5">
-              <Label htmlFor="distance">거리 (km)</Label>
-              <Input
-                id="distance"
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">거리 (km)</label>
+              <input
                 type="number"
                 min={0}
                 step="0.1"
@@ -328,42 +324,49 @@ export default function NewWorkoutPage() {
                 placeholder="예: 5"
                 value={distance}
                 onChange={(e) => setDistance(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
               />
             </section>
-            <section className="flex flex-col gap-1.5">
-              <Label htmlFor="r-duration">소요 시간 (분)</Label>
-              <Input
-                id="r-duration"
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">소요 시간 (분)</label>
+              <input
                 type="number"
                 min={1}
                 required
                 placeholder="예: 40"
                 value={runDuration}
                 onChange={(e) => setRunDuration(e.target.value)}
-              />
-            </section>
-            <section className="flex flex-col gap-1.5">
-              <Label htmlFor="pace">평균 페이스 (선택, 비우면 자동 계산)</Label>
-              <Input
-                id="pace"
-                placeholder="mm:ss (예: 8:00)"
-                value={pace}
-                onChange={(e) => setPace(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
               />
             </section>
             <section>
-              <Label className="mb-2">강도 (선택)</Label>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+                평균 페이스 (선택, 비우면 자동 계산)
+              </label>
+              <input
+                type="text"
+                placeholder="mm:ss (예: 8:00)"
+                value={pace}
+                onChange={(e) => setPace(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+            </section>
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">강도 (선택)</label>
               <div className="flex gap-2">
                 {(['낮음', '보통', '높음'] as Intensity[]).map((lv) => (
-                  <Button
+                  <button
                     type="button"
                     key={lv}
-                    variant={intensity === lv ? 'default' : 'outline'}
                     onClick={() => setIntensity(intensity === lv ? '' : lv)}
-                    className="flex-1"
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                      intensity === lv
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                    }`}
                   >
                     {lv}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </section>
@@ -372,46 +375,52 @@ export default function NewWorkoutPage() {
 
         {type === 'other' && (
           <>
-            <section className="flex flex-col gap-1.5">
-              <Label htmlFor="content">운동 내용</Label>
-              <Textarea
-                id="content"
-                required
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">운동 내용</label>
+              <textarea
                 rows={4}
+                required
                 placeholder="예: 실내 클라이밍 1시간, 볼더링 V3 5개 완등"
                 value={otherContent}
                 onChange={(e) => setOtherContent(e.target.value)}
+                className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
               />
             </section>
-            <section className="flex flex-col gap-1.5">
-              <Label htmlFor="o-duration">총 운동 시간 (분, 선택)</Label>
-              <Input
-                id="o-duration"
+            <section>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+                총 운동 시간 (분, 선택)
+              </label>
+              <input
                 type="number"
                 min={1}
                 placeholder="예: 60"
                 value={otherDuration}
                 onChange={(e) => setOtherDuration(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
               />
             </section>
           </>
         )}
 
-        <section className="flex flex-col gap-1.5">
-          <Label htmlFor="memo">메모 (선택)</Label>
-          <Textarea
-            id="memo"
+        <section>
+          <label className="mb-1 block text-sm font-medium text-gray-900">메모 (선택)</label>
+          <textarea
             rows={2}
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
+            className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
           />
         </section>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <Button type="submit" size="lg" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-50"
+        >
           {loading ? '저장 중...' : '기록 저장'}
-        </Button>
+        </button>
       </form>
     </main>
   )

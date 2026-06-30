@@ -3,14 +3,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { WORKOUT_TYPE_META } from '@/lib/constants'
-import { cn } from '@/lib/utils'
 import type { WorkoutSession } from '@/types'
-import { Button, buttonVariants } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -83,27 +79,30 @@ export default function CalendarPage() {
   return (
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-6 flex items-center justify-between">
-        <Link href="/dashboard" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+        <Link href="/dashboard" className="text-sm text-gray-500 hover:underline">
           ← 대시보드
         </Link>
-        <Link href="/workouts/new" className={buttonVariants({ size: 'sm' })}>
+        <Link
+          href="/workouts/new"
+          className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
+        >
           + 기록
         </Link>
       </header>
 
       <div className="mb-4 flex items-center justify-between">
-        <Button variant="ghost" size="icon-sm" onClick={() => shiftMonth(-1)}>
-          <ChevronLeft />
-        </Button>
-        <h1 className="text-lg font-bold">
+        <button onClick={() => shiftMonth(-1)} className="px-2 py-1 text-gray-500 hover:text-gray-900">
+          ‹
+        </button>
+        <h1 className="text-lg font-bold text-gray-900">
           {year}년 {month}월
         </h1>
-        <Button variant="ghost" size="icon-sm" onClick={() => shiftMonth(1)}>
-          <ChevronRight />
-        </Button>
+        <button onClick={() => shiftMonth(1)} className="px-2 py-1 text-gray-500 hover:text-gray-900">
+          ›
+        </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-400">
         {WEEKDAYS.map((w) => (
           <div key={w} className="py-1">
             {w}
@@ -122,15 +121,16 @@ export default function CalendarPage() {
             <button
               key={key}
               onClick={() => setSelected(isSelected ? null : key)}
-              className={cn(
-                'flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition',
-                isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-              )}
+              className={`flex aspect-square flex-col items-center justify-center rounded-lg border text-sm transition ${
+                isSelected
+                  ? 'border-gray-900 bg-gray-900 text-white'
+                  : 'border-transparent text-gray-700 hover:border-gray-300'
+              }`}
             >
               <span>{day}</span>
               <span className="mt-1 flex h-1.5 gap-0.5">
                 {types.map((t) => (
-                  <span key={t} className={cn('h-1.5 w-1.5 rounded-full', WORKOUT_TYPE_META[t].dot)} />
+                  <span key={t} className={`h-1.5 w-1.5 rounded-full ${WORKOUT_TYPE_META[t].dot}`} />
                 ))}
               </span>
             </button>
@@ -140,7 +140,7 @@ export default function CalendarPage() {
 
       <div className="mt-6">
         {loading ? (
-          <p className="text-center text-sm text-muted-foreground">불러오는 중...</p>
+          <p className="text-center text-sm text-gray-400">불러오는 중...</p>
         ) : selected ? (
           selectedSessions.length > 0 ? (
             <ul className="flex flex-col gap-2">
@@ -150,16 +150,16 @@ export default function CalendarPage() {
                   <li key={s.id}>
                     <Link
                       href={`/workouts/${s.id}`}
-                      className="flex items-center justify-between rounded-xl px-4 py-3 ring-1 ring-foreground/10 transition hover:bg-muted"
+                      className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 transition hover:border-gray-900"
                     >
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className={meta.badge}>
+                        <span className={`rounded-full px-2 py-0.5 text-xs ${meta.badge}`}>
                           {meta.label}
-                        </Badge>
-                        <span className="text-sm">{s.title}</span>
+                        </span>
+                        <span className="text-sm text-gray-900">{s.title}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {s.duration_minutes ? `${s.duration_minutes}분` : ''}
+                      <span className="text-xs text-gray-400">
+                        {s.duration_minutes ? `${s.duration_minutes}분` : ''} →
                       </span>
                     </Link>
                   </li>
@@ -167,10 +167,10 @@ export default function CalendarPage() {
               })}
             </ul>
           ) : (
-            <p className="text-center text-sm text-muted-foreground">이 날의 기록이 없습니다.</p>
+            <p className="text-center text-sm text-gray-400">이 날의 기록이 없습니다.</p>
           )
         ) : (
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-gray-400">
             이번 달 {sessions.length}건의 기록 · 날짜를 선택하세요.
           </p>
         )}
