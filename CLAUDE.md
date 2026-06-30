@@ -79,6 +79,9 @@ supabase/
 - **AI 추천 응답은 반드시 구조화된 JSON(`structured_data`)으로 파싱하여 저장한다.**
   - 이것이 "운동반영하기" 기능의 입력값이다. 파싱 실패 시 운동반영하기가 동작하지 않는다
 - **AI 엔진은 provider 추상화로 분리한다** (`app/services/ai/`). `AI_PROVIDER` 환경변수로 `openai`/`claude`를 선택하며, 라우터는 provider 구현을 직접 알지 않는다.
+- AI 추천 컨텍스트는 RAG가 아니라 **정형 운동 기록 기반 동적 SQL 컨텍스트 주입**을 우선한다.
+  - 사용자 메시지에 "지난번", "2주 전", "최고기록", 특정 부위/종목 키워드가 있으면 관련 운동 세트 상세를 SQL로 조회해 프롬프트에 추가한다.
+  - 운동 기록처럼 날짜/중량/반복수가 명확한 데이터는 벡터 검색보다 SQL 조회가 더 정확하고 비용이 낮다.
 - Supabase 클라이언트는 `service_role_key`로 초기화한다 (RLS 우회 목적)
 - 라우터는 역할별로 분리한다: `routers/profile.py`, `routers/workouts.py`, `routers/chat.py`, `routers/stats.py`
 

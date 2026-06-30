@@ -34,7 +34,7 @@ async def send_message(
     persona = (profile or {}).get("persona", "angel")
 
     # 2. 컨텍스트 구성 + AI 호출
-    context = build_user_context(supabase, user_id, profile)
+    context = build_user_context(supabase, user_id, profile, body.message)
     system_prompt = build_system_prompt(persona)
     user_prompt = build_user_prompt(context, body.message)
 

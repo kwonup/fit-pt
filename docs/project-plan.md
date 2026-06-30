@@ -70,6 +70,7 @@ Next.js: 추천 카드 렌더링 + "운동반영하기" 버튼
 - [x] FastAPI /chat POST 구현
   - [x] 사용자 프로필 조회
   - [x] 최근 30일 운동 기록 요약 (`services/context.py`)
+  - [x] 질문 의도 기반 동적 SQL 컨텍스트 주입 (지난번/2주 전/최고기록/부위 키워드)
   - [x] AI provider 추상화 (`services/ai/`, `AI_PROVIDER`로 openai/claude 선택)
   - [x] structured_data JSON 파싱 (`services/ai/parser.py`, 실패 시 graceful)
   - [x] ai_recommendations 저장
