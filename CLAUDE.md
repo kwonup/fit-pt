@@ -7,7 +7,7 @@ AI 코딩 도구가 이 프로젝트를 이해하고 일관성 있게 코드를 
 핏피티는 AI 챗봇 기반 운동 기록 및 루틴 추천 웹앱이다.
 
 **핵심 흐름:**
-운동 기록 → AI 챗봇 추천 요청 → 추천 카드 생성 → "운동반영하기" 클릭 → 기록 폼 자동 채우기 → 저장
+운동 기록(웨이트/러닝/기타) → AI 챗봇 추천 요청 → 추천 카드 생성 → "운동반영하기" 클릭 → 기록 폼 자동 채우기 → 저장
 
 **핵심 차별점:** AI 추천 결과를 텍스트로 끝내지 않고, 실제 운동 기록 데이터로 전환하는 것.
 
@@ -15,7 +15,7 @@ AI 코딩 도구가 이 프로젝트를 이해하고 일관성 있게 코드를 
 
 | 영역 | 기술 |
 |---|---|
-| Frontend | Next.js 15 (App Router), TypeScript, Tailwind CSS |
+| Frontend | Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
 | Backend | FastAPI, Python 3.12 |
 | Database / Auth | Supabase (PostgreSQL + Supabase Auth) |
 | Frontend 배포 | Vercel (Root: apps/web) |
@@ -27,6 +27,7 @@ AI 코딩 도구가 이 프로젝트를 이해하고 일관성 있게 코드를 
 apps/web/
   app/            # Next.js App Router (페이지, 레이아웃)
   components/     # 재사용 UI 컴포넌트
+  components/ui/  # shadcn/ui 기반 공통 UI 컴포넌트
   lib/            # API 클라이언트, 유틸리티, Supabase 설정
   types/          # TypeScript 타입 정의
 
@@ -63,6 +64,10 @@ supabase/
   - 예외: Supabase Auth는 프론트에서 직접 사용 가능 (`@supabase/ssr` 활용)
 - TypeScript 타입은 `types/` 폴더에 분리 정의
 - **Tailwind CSS만 사용한다.** CSS 모듈, styled-components, inline style 사용 금지
+- 기본 UI 컴포넌트는 **shadcn/ui**를 우선 사용한다. 버튼, 입력, 카드, 다이얼로그, 탭, 배지 등은 `components/ui/`의 컴포넌트를 재사용한다.
+- shadcn/ui 컴포넌트는 필요한 것만 추가한다. 한 번에 많은 컴포넌트를 설치하지 말고, 구현할 화면에 필요한 단위로 추가한다.
+- shadcn/ui 설정은 `apps/web/components.json`, 공통 유틸은 `apps/web/lib/utils.ts`, 디자인 토큰은 `apps/web/app/globals.css`와 `apps/web/tailwind.config.ts`를 기준으로 한다.
+- 아이콘이 필요한 버튼/액션에는 가능하면 `lucide-react` 아이콘을 사용한다.
 
 ### Backend (FastAPI)
 
@@ -98,7 +103,7 @@ supabase/
 - [ ] 웨이트트레이닝 기록 작성 UI
 - [ ] 러닝 기록 작성 UI
 - [ ] 운동 기록 조회 / 수정 / 삭제
-- [ ] 월간 캘린더 (웨이트/러닝 구분 표시)
+- [ ] 월간 캘린더 (웨이트/러닝/기타 구분 표시)
 
 ### Phase 4 — AI 챗봇
 - [ ] FastAPI `/chat` 엔드포인트
@@ -120,6 +125,8 @@ supabase/
 ## AI 추천 structured_data 형식
 
 "운동반영하기"를 위한 핵심 데이터 구조. FastAPI가 OpenAI 응답을 이 형식으로 파싱해서 저장해야 한다.
+`type`은 `weight`, `running`, `other` 중 하나이며, `workout_type`과 동일해야 한다.
+모든 타입의 `title`은 실제 운동 기록 생성 API의 공통 필수 필드로 매핑된다.
 
 ### 웨이트트레이닝
 
@@ -142,6 +149,13 @@ supabase/
 }
 ```
 
+**기록 API 매핑**
+- `title` → `/workouts/weight.title`
+- `estimated_duration_minutes` → `/workouts/weight.duration_minutes`
+- `exercises[].name` → `/workouts/weight.exercises[].exercise_name`
+- `exercises[].sets[].rest_seconds`는 추천 카드 표시용이며, 현재 `weight_sets`에는 저장하지 않는다.
+- `muscle_group`은 AI 추천/표시용 예약 필드이며, 현재 웨이트 기록 생성 API에는 보내지 않는다.
+
 ### 러닝
 
 ```json
@@ -157,6 +171,31 @@ supabase/
   "cautions": ""
 }
 ```
+
+**기록 API 매핑**
+- `title` → `/workouts/running.title`
+- `total_duration_minutes` → `/workouts/running.duration_minutes`
+- `distance_km` → `/workouts/running.distance_km`
+- `avg_pace` → `/workouts/running.avg_pace`
+- `warmup`, `main`, `cooldown`, `cautions`는 추천 카드 표시용이며, 현재 러닝 상세 테이블에는 별도 저장하지 않는다.
+
+### 기타
+
+```json
+{
+  "type": "other",
+  "title": "오늘의 회복 스트레칭",
+  "content": "허리 부담을 줄이기 위해 고관절 가동성 10분, 햄스트링 스트레칭 10분, 코어 안정화 운동 10분을 진행하세요.",
+  "estimated_duration_minutes": 30,
+  "cautions": "통증이 생기면 즉시 중단하고 강도를 낮추세요."
+}
+```
+
+**기록 API 매핑**
+- `title` → `/workouts/other.title`
+- `content` → `/workouts/other.content`
+- `estimated_duration_minutes` → `/workouts/other.duration_minutes`
+- `cautions`는 추천 카드 표시용이며, 현재 `other_sessions`에는 저장하지 않는다.
 
 ## MVP 범위 외 기능 (구현 금지)
 

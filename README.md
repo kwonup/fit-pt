@@ -16,7 +16,7 @@ AI 챗봇이 운동 기록을 분석하고 맞춤 루틴을 추천하는 웹 서
 
 | 영역 | 기술 | 배포 |
 |---|---|---|
-| Frontend | Next.js 15, TypeScript, Tailwind CSS | Vercel |
+| Frontend | Next.js 15, TypeScript, Tailwind CSS, shadcn/ui | Vercel |
 | Backend | FastAPI, Python 3.12 | Render |
 | Database / Auth | Supabase (PostgreSQL + Auth) | Supabase Cloud |
 
@@ -30,6 +30,14 @@ fit-pt/
   supabase/ # DB 마이그레이션 & 시드 데이터
   docs/     # 기획서, API 명세, DB 설계
 ```
+
+### 프론트엔드 UI 기준
+
+- 공통 UI 컴포넌트는 shadcn/ui 기반으로 구성합니다.
+- shadcn/ui 설정 파일: `apps/web/components.json`
+- 공통 UI 컴포넌트 위치: `apps/web/components/ui/`
+- Tailwind 디자인 토큰: `apps/web/app/globals.css`, `apps/web/tailwind.config.ts`
+- 현재 추가된 기본 컴포넌트: `button`, `input`, `label`, `card`, `textarea`, `select`, `tabs`, `dialog`, `badge`
 
 ## 실행 방법
 

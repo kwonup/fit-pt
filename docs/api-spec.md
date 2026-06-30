@@ -225,6 +225,7 @@ AI 챗봇 메시지 전송 및 응답.
 ```
 
 > `recommendation`은 운동 추천 요청인 경우에만 포함됩니다. 일반 질문 응답 시 `null`.
+> `recommendation.workout_type`은 `weight`, `running`, `other` 중 하나입니다.
 
 ---
 

@@ -115,7 +115,7 @@ AI 추천 이력. **structured_data가 "운동반영하기"의 입력값.**
 | user_message | TEXT | NOT NULL | 사용자 요청 메시지 |
 | ai_response_text | TEXT | NOT NULL | AI 응답 텍스트 (UI 표시용) |
 | structured_data | JSONB | | 구조화된 루틴 (운동반영하기 입력값) |
-| workout_type | TEXT | CHECK (weight/running) | |
+| workout_type | TEXT | CHECK (weight/running/other) | |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 ### chat_messages
@@ -173,6 +173,18 @@ AI 추천 이력. **structured_data가 "운동반영하기"의 입력값.**
   "main": "30분 페이스 유지 러닝",
   "cooldown": "5분 스트레칭",
   "cautions": ""
+}
+```
+
+### 기타
+
+```json
+{
+  "type": "other",
+  "title": "오늘의 회복 스트레칭",
+  "content": "고관절 가동성 10분, 햄스트링 스트레칭 10분, 코어 안정화 운동 10분",
+  "estimated_duration_minutes": 30,
+  "cautions": "통증이 생기면 즉시 중단"
 }
 ```
 

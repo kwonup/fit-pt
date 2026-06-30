@@ -126,7 +126,16 @@ export interface RunningRecommendation {
   cautions: string
 }
 
-export type Recommendation = WeightRecommendation | RunningRecommendation
+// AI 추천 structured_data (기타)
+export interface OtherRecommendation {
+  type: 'other'
+  title: string
+  content: string
+  estimated_duration_minutes?: number
+  cautions?: string
+}
+
+export type Recommendation = WeightRecommendation | RunningRecommendation | OtherRecommendation
 
 // 채팅 응답
 export interface ChatResponse {
