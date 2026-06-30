@@ -23,6 +23,8 @@ JSON_CONTRACT = """
 - 사용자가 운동 루틴을 요청했고 추천을 만들었다면 is_recommendation=true, workout_type과 structured_data를 채운다.
 - 일반적인 질문(인사, 조언 등)이면 is_recommendation=false, workout_type=null, structured_data=null.
 - 사용자 프로필의 주의/부상 부위를 반드시 반영하고, 무리한 강도를 피한다.
+- 컨텍스트에 '종목별 중량 기록'이 있으면 적극 활용한다. 웨이트 중량은 '최근' 작업 중량을 기준으로 점진적 과부하를 적용해, 보통 직전 대비 2.5~5kg(또는 약 2~5%) 범위에서 소폭 올려 추천한다. 역대 '최고' 중량을 크게 뛰어넘는 무리한 무게는 추천하지 않는다.
+- 기록이 없는 종목은 숙련도에 맞는 보수적인 시작 무게를 제안한다.
 
 structured_data 형식 (workout_type별):
 
