@@ -67,16 +67,16 @@ Next.js: 추천 카드 렌더링 + "운동반영하기" 버튼
 - [x] 기록 상세 화면 (타입별 렌더링) + 삭제
 
 ### Phase 4 — AI 챗봇
-- [ ] FastAPI /chat POST 구현
-  - [ ] 사용자 프로필 조회
-  - [ ] 최근 30일 운동 기록 요약
-  - [ ] OpenAI API 호출 (structured output)
-  - [ ] ai_recommendations 저장
-  - [ ] chat_messages 저장
+- [x] FastAPI /chat POST 구현
+  - [x] 사용자 프로필 조회
+  - [x] 최근 30일 운동 기록 요약 (`services/context.py`)
+  - [x] AI provider 추상화 (`services/ai/`, `AI_PROVIDER`로 openai/claude 선택)
+  - [x] structured_data JSON 파싱 (`services/ai/parser.py`, 실패 시 graceful)
+  - [x] ai_recommendations 저장
+  - [x] chat_messages 저장
+  - [x] 페르소나별 말투 시스템 프롬프트 (angel/tiger)
 - [ ] 챗봇 UI (채팅창, 메시지 렌더링)
-- [ ] 웨이트 추천 카드 컴포넌트
-- [ ] 러닝 추천 카드 컴포넌트
-- [ ] 페르소나별 말투 적용 (angel/tiger 시스템 프롬프트)
+- [ ] 웨이트 / 러닝 / 기타 추천 카드 컴포넌트
 
 ### Phase 5 — 운동반영하기
 - [ ] structured_data → 기록 폼 초기값 매핑 로직

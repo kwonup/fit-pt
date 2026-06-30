@@ -36,7 +36,9 @@ apps/api/
     routers/      # 엔드포인트 그룹 (profile, workouts, chat, stats)
     models/       # Pydantic 모델
     schemas/      # Pydantic 스키마 (요청/응답 DTO)
-    services/     # 비즈니스 로직 (AI 처리, DB 쿼리)
+    services/     # 비즈니스 로직
+      ai/         # AI provider 추상화 (factory, openai/claude, prompts, parser)
+      context.py  # 프로필 + 최근 기록 컨텍스트 구성
     core/         # 설정(config.py), 인증 의존성(deps.py)
 
 supabase/
@@ -75,56 +77,59 @@ supabase/
 - **사용자 데이터 조회 시 반드시 `user_id`로 필터링한다.** 타인 데이터 접근 불가
 - **AI 추천 응답은 반드시 구조화된 JSON(`structured_data`)으로 파싱하여 저장한다.**
   - 이것이 "운동반영하기" 기능의 입력값이다. 파싱 실패 시 운동반영하기가 동작하지 않는다
+- **AI 엔진은 provider 추상화로 분리한다** (`app/services/ai/`). `AI_PROVIDER` 환경변수로 `openai`/`claude`를 선택하며, 라우터는 provider 구현을 직접 알지 않는다.
 - Supabase 클라이언트는 `service_role_key`로 초기화한다 (RLS 우회 목적)
 - 라우터는 역할별로 분리한다: `routers/profile.py`, `routers/workouts.py`, `routers/chat.py`, `routers/stats.py`
 
 ### 보안 (절대 위반 금지)
 
-- `OPENAI_API_KEY`: **백엔드에서만** 사용
+- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`: **백엔드에서만** 사용
 - `SUPABASE_SERVICE_ROLE_KEY`: **백엔드에서만** 사용
 - 프론트엔드에서 사용 가능한 환경변수: `NEXT_PUBLIC_` 접두사가 붙은 것만
+- `.env.example`에는 **실제 키를 절대 넣지 않는다** (git에 커밋되는 템플릿). 실제 값은 `.env`/`.env.local`에만 둔다.
 
 ## 구현 우선순위
 
-### Phase 1 — 기반 세팅 (현재 단계)
+> 상세 진행 상황은 `docs/project-plan.md`를 기준으로 하며, 아래는 요약이다.
+
+### Phase 1 — 기반 세팅 ✅
 - [x] 모노레포 구조 생성
 - [x] DB 스키마 설계 (supabase/migrations/)
-- [ ] Supabase 프로젝트 연결 및 마이그레이션 실행
-- [ ] Next.js 기본 라우팅 구성
-- [ ] FastAPI 기본 서버 구동 확인
+- [x] Supabase 프로젝트 연결 (002·003 마이그레이션은 SQL Editor에서 실행 필요)
+- [x] Next.js 기본 라우팅 구성
+- [x] FastAPI 기본 서버 구동 확인
 
-### Phase 2 — 인증 & 프로필
-- [ ] Supabase Auth 연동 (이메일 로그인/가입)
-- [ ] 로그인 / 회원가입 UI
-- [ ] 프로필 설정 페이지 (목표, 숙련도, 페르소나)
-- [ ] FastAPI 인증 미들웨어 (`app/core/deps.py`)
+### Phase 2 — 인증 & 프로필 ✅
+- [x] Supabase Auth 연동 (이메일 로그인/가입)
+- [x] 로그인 / 회원가입 UI (`/login`)
+- [x] 프로필 설정(온보딩) 페이지 (목표, 숙련도, 페르소나)
+- [x] FastAPI 인증 미들웨어 (`app/core/deps.py`)
 
-### Phase 3 — 운동 기록 CRUD
-- [ ] 웨이트트레이닝 기록 작성 UI
-- [ ] 러닝 기록 작성 UI
-- [ ] 운동 기록 조회 / 수정 / 삭제
-- [ ] 월간 캘린더 (웨이트/러닝/기타 구분 표시)
+### Phase 3 — 운동 기록 CRUD ✅
+- [x] 웨이트 / 러닝 / 기타 기록 작성 UI (`/workouts/new`)
+- [x] 운동 기록 조회 / 삭제 (상세 `/workouts/[id]`)
+- [x] 월간 캘린더 (웨이트/러닝/기타 색상 구분, `/calendar`)
 
-### Phase 4 — AI 챗봇
-- [ ] FastAPI `/chat` 엔드포인트
-- [ ] OpenAI API 연동 (사용자 기록 + 프로필 컨텍스트)
-- [ ] 추천 카드 UI (웨이트 / 러닝)
-- [ ] 페르소나별 말투 적용 (angel / tiger)
+### Phase 4 — AI 챗봇 (진행 중)
+- [x] FastAPI `/chat` 엔드포인트
+- [x] AI provider 연동 (OpenAI/Claude, 기록 + 프로필 컨텍스트)
+- [x] 페르소나별 말투 적용 (angel / tiger)
+- [ ] 챗봇 UI + 추천 카드 (웨이트 / 러닝 / 기타)
 
 ### Phase 5 — 운동반영하기 (핵심 차별점)
-- [ ] AI `structured_data` JSON 파싱 및 저장
+- [x] AI `structured_data` JSON 파싱 및 저장 (백엔드 완료)
 - [ ] "운동반영하기" 버튼
 - [ ] `structured_data` → 기록 폼 초기값 매핑
 - [ ] 저장 후 캘린더 & 마이페이지 즉시 반영
 
 ### Phase 6 — 마이페이지 & 완성도
-- [ ] 주당 운동 시간 바 차트 (4주/8주)
-- [ ] 요약 카드 (이번 주 시간, 총 횟수, 최근 운동일)
+- [ ] 주당 운동 시간 바 차트 (4주/8주) — 백엔드 `/stats/weekly` 완료
+- [ ] 요약 카드 (이번 주 시간, 총 횟수, 최근 운동일) — 백엔드 `/stats/summary` 완료
 - [ ] 반응형 모바일 최적화
 
 ## AI 추천 structured_data 형식
 
-"운동반영하기"를 위한 핵심 데이터 구조. FastAPI가 OpenAI 응답을 이 형식으로 파싱해서 저장해야 한다.
+"운동반영하기"를 위한 핵심 데이터 구조. FastAPI가 AI provider(OpenAI/Claude) 응답을 이 형식으로 파싱해서 저장해야 한다.
 `type`은 `weight`, `running`, `other` 중 하나이며, `workout_type`과 동일해야 한다.
 모든 타입의 `title`은 실제 운동 기록 생성 API의 공통 필수 필드로 매핑된다.
 

@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 type Mode = 'login' | 'signup'
 
@@ -41,7 +44,6 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    // 이메일 확인이 꺼져 있으면 바로 세션이 생긴다. 켜져 있으면 확인 안내.
     if (data.session) {
       router.replace('/onboarding')
       router.refresh()
@@ -55,53 +57,55 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-2xl font-bold text-gray-900">핏피티</h1>
-        <p className="mb-6 text-sm text-gray-500">
+        <h1 className="mb-1 text-2xl font-bold">핏피티</h1>
+        <p className="mb-6 text-sm text-muted-foreground">
           {mode === 'login' ? '로그인하고 오늘의 루틴을 받아보세요.' : '계정을 만들고 시작하세요.'}
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input
-            type="email"
-            required
-            placeholder="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
-          />
-          <input
-            type="password"
-            required
-            minLength={6}
-            placeholder="비밀번호 (6자 이상)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
-          />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email">이메일</Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">비밀번호 (6자 이상)</Label>
+            <Input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {notice && <p className="text-sm text-green-700">{notice}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          {notice && <p className="text-sm text-emerald-600">{notice}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-50"
-          >
+          <Button type="submit" size="lg" disabled={loading} className="mt-1">
             {loading ? '처리 중...' : mode === 'login' ? '로그인' : '회원가입'}
-          </button>
+          </Button>
         </form>
 
-        <button
+        <Button
           type="button"
+          variant="link"
+          size="sm"
           onClick={() => {
             setMode(mode === 'login' ? 'signup' : 'login')
             setError(null)
             setNotice(null)
           }}
-          className="mt-4 text-sm text-gray-500 underline-offset-2 hover:underline"
+          className="mt-4 px-0 text-muted-foreground"
         >
           {mode === 'login' ? '계정이 없으신가요? 회원가입' : '이미 계정이 있으신가요? 로그인'}
-        </button>
+        </Button>
       </div>
     </main>
   )

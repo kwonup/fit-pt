@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { ApiError, apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/client'
 import { PERSONAS } from '@/lib/constants'
 import type { UserProfile } from '@/types'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -46,7 +49,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-gray-400">불러오는 중...</p>
+        <p className="text-sm text-muted-foreground">불러오는 중...</p>
       </main>
     )
   }
@@ -56,39 +59,42 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">핏피티</h1>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-gray-500 underline-offset-2 hover:underline"
-        >
+        <h1 className="text-2xl font-bold">핏피티</h1>
+        <Button variant="ghost" size="sm" onClick={handleLogout}>
           로그아웃
-        </button>
+        </Button>
       </header>
 
       {profile && (
-        <section className="mb-8 rounded-xl border border-gray-200 p-4">
-          <h2 className="mb-3 text-sm font-medium text-gray-900">내 운동 프로필</h2>
-          <dl className="grid grid-cols-2 gap-y-2 text-sm">
-            <dt className="text-gray-500">목표</dt>
-            <dd className="text-gray-900">{profile.fitness_goals.join(', ') || '-'}</dd>
-            <dt className="text-gray-500">숙련도</dt>
-            <dd className="text-gray-900">{profile.fitness_level}</dd>
-            <dt className="text-gray-500">주 운동 타입</dt>
-            <dd className="text-gray-900">{profile.main_workout_type}</dd>
-            <dt className="text-gray-500">주당 횟수</dt>
-            <dd className="text-gray-900">{profile.weekly_frequency}회</dd>
-            <dt className="text-gray-500">주의 부위</dt>
-            <dd className="text-gray-900">{profile.caution_areas.join(', ') || '없음'}</dd>
-            <dt className="text-gray-500">코치</dt>
-            <dd className="text-gray-900">{personaName}</dd>
-          </dl>
-          <button
-            onClick={() => router.push('/onboarding')}
-            className="mt-3 text-xs text-gray-500 underline-offset-2 hover:underline"
-          >
-            프로필 수정
-          </button>
-        </section>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>내 운동 프로필</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-y-2 text-sm">
+              <dt className="text-muted-foreground">목표</dt>
+              <dd>{profile.fitness_goals.join(', ') || '-'}</dd>
+              <dt className="text-muted-foreground">숙련도</dt>
+              <dd>{profile.fitness_level}</dd>
+              <dt className="text-muted-foreground">주 운동 타입</dt>
+              <dd>{profile.main_workout_type}</dd>
+              <dt className="text-muted-foreground">주당 횟수</dt>
+              <dd>{profile.weekly_frequency}회</dd>
+              <dt className="text-muted-foreground">주의 부위</dt>
+              <dd>{profile.caution_areas.join(', ') || '없음'}</dd>
+              <dt className="text-muted-foreground">코치</dt>
+              <dd>{personaName}</dd>
+            </dl>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => router.push('/onboarding')}
+              className="mt-3 px-0 text-muted-foreground"
+            >
+              프로필 수정
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       <nav className="grid gap-3">
@@ -101,7 +107,7 @@ export default function DashboardPage() {
           item.soon ? (
             <div
               key={item.href}
-              className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-400"
+              className="flex items-center justify-between rounded-xl px-4 py-3 text-sm text-muted-foreground ring-1 ring-foreground/10"
             >
               <span>{item.label}</span>
               <span className="text-xs">준비 중</span>
@@ -110,10 +116,10 @@ export default function DashboardPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center justify-between rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition hover:border-gray-900"
+              className="flex items-center justify-between rounded-xl px-4 py-3 text-sm ring-1 ring-foreground/10 transition hover:bg-muted"
             >
               <span>{item.label}</span>
-              <span className="text-gray-400">→</span>
+              <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
           )
         )}
