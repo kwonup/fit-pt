@@ -93,7 +93,7 @@ export default function DashboardPage() {
 
       <nav className="grid gap-3">
         {[
-          { label: 'AI 코치에게 루틴 받기', href: '/chat', soon: true },
+          { label: 'AI 코치에게 루틴 받기', href: '/chat', soon: false },
           { label: '운동 기록하기', href: '/workouts/new', soon: false },
           { label: '캘린더', href: '/calendar', soon: false },
           { label: '마이페이지', href: '/mypage', soon: true },

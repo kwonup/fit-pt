@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
+import { takeWorkoutPrefill } from '@/lib/workout-prefill'
 import type { WorkoutType } from '@/types'
 
 type SetInput = { weight_kg: string; reps: string }
@@ -50,6 +51,45 @@ export default function NewWorkoutPage() {
   // 기타
   const [otherContent, setOtherContent] = useState('')
   const [otherDuration, setOtherDuration] = useState('')
+
+  // AI 추천 카드에서 넘어온 경우 폼을 미리 채운다.
+  useEffect(() => {
+    const prefill = takeWorkoutPrefill()
+    if (!prefill) return
+    const { workout_type, structured_data: rec } = prefill
+
+    setType(workout_type)
+    setTitle(rec.title)
+
+    if (rec.type === 'weight') {
+      setExercises(
+        rec.exercises.map((ex) => ({
+          exercise_name: ex.name,
+          sets: ex.sets.map((s) => ({
+            weight_kg: s.weight_kg != null ? String(s.weight_kg) : '',
+            reps: s.reps != null ? String(s.reps) : '',
+          })),
+        }))
+      )
+      if (rec.estimated_duration_minutes) setWeightDuration(String(rec.estimated_duration_minutes))
+      if (rec.cautions) setMemo(`⚠️ ${rec.cautions}`)
+    } else if (rec.type === 'running') {
+      setDistance(String(rec.distance_km))
+      setRunDuration(String(rec.total_duration_minutes))
+      if (rec.avg_pace) setPace(rec.avg_pace)
+      const lines = [
+        rec.warmup && `웜업: ${rec.warmup}`,
+        rec.main && `본운동: ${rec.main}`,
+        rec.cooldown && `쿨다운: ${rec.cooldown}`,
+        rec.cautions && `⚠️ ${rec.cautions}`,
+      ].filter(Boolean)
+      if (lines.length) setMemo(lines.join('\n'))
+    } else {
+      setOtherContent(rec.content)
+      if (rec.estimated_duration_minutes) setOtherDuration(String(rec.estimated_duration_minutes))
+      if (rec.cautions) setMemo(`⚠️ ${rec.cautions}`)
+    }
+  }, [])
 
   function updateExercise(i: number, patch: Partial<ExerciseInput>) {
     setExercises((prev) => prev.map((ex, idx) => (idx === i ? { ...ex, ...patch } : ex)))

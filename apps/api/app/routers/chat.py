@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 
@@ -9,6 +11,7 @@ from app.services.ai.prompts import build_system_prompt, build_user_prompt
 from app.services.context import build_user_context
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("")
@@ -38,6 +41,7 @@ async def send_message(
     try:
         raw = get_provider().generate(system_prompt, user_prompt)
     except Exception as exc:
+        logger.exception("AI response generation failed")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI 응답 생성에 실패했습니다.",

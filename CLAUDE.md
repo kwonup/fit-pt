@@ -66,7 +66,8 @@ supabase/
   - 예외: Supabase Auth는 프론트에서 직접 사용 가능 (`@supabase/ssr` 활용)
 - TypeScript 타입은 `types/` 폴더에 분리 정의
 - **Tailwind CSS만 사용한다.** CSS 모듈, styled-components, inline style 사용 금지
-- 기본 UI 컴포넌트는 **shadcn/ui**를 우선 사용한다. 버튼, 입력, 카드, 다이얼로그, 탭, 배지 등은 `components/ui/`의 컴포넌트를 재사용한다.
+- **shadcn/ui는 "선별 도입" 한다.** 기존 화면(온보딩/대시보드/캘린더/기록 등)은 순수 Tailwind를 유지하고, 전면 전환하지 않는다.
+- **새 화면이나 복합 컴포넌트**(챗봇, 다이얼로그, 탭 등 직접 구현이 번거로운 것)에 한해 `components/ui/`의 shadcn 컴포넌트를 사용한다. 단순 버튼/입력은 raw Tailwind로 충분하면 그대로 둔다.
 - shadcn/ui 컴포넌트는 필요한 것만 추가한다. 한 번에 많은 컴포넌트를 설치하지 말고, 구현할 화면에 필요한 단위로 추가한다.
 - shadcn/ui 설정은 `apps/web/components.json`, 공통 유틸은 `apps/web/lib/utils.ts`, 디자인 토큰은 `apps/web/app/globals.css`와 `apps/web/tailwind.config.ts`를 기준으로 한다.
 - 아이콘이 필요한 버튼/액션에는 가능하면 `lucide-react` 아이콘을 사용한다.

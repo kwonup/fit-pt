@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from postgrest.exceptions import APIError
 from app.core.deps import get_current_user_id, get_supabase
 from app.schemas.profile import ProfileUpdate
 from supabase import Client
@@ -6,14 +7,22 @@ from supabase import Client
 router = APIRouter()
 
 
+def _is_no_rows_error(exc: APIError) -> bool:
+    error = exc.args[0] if exc.args else {}
+    return isinstance(error, dict) and error.get("code") == "PGRST116"
+
+
 @router.get("")
 async def get_profile(
     user_id: str = Depends(get_current_user_id),
     supabase: Client = Depends(get_supabase),
 ):
-    result = supabase.table("user_profiles").select("*").eq("id", user_id).single().execute()
-    if result.data is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="프로필이 없습니다.")
+    try:
+        result = supabase.table("user_profiles").select("*").eq("id", user_id).single().execute()
+    except APIError as exc:
+        if _is_no_rows_error(exc):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="프로필이 없습니다.") from exc
+        raise
     return result.data
 
 
