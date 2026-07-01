@@ -7,12 +7,20 @@ import { ApiError, apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/client'
 import { PERSONAS } from '@/lib/constants'
-import type { UserProfile } from '@/types'
+import type { StatsSummary, UserProfile, WeeklyStat } from '@/types'
+
+const fmtMonthDay = (iso: string) => {
+  const [, m, d] = iso.split('-')
+  return `${Number(m)}/${Number(d)}`
+}
 
 export default function DashboardPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [summary, setSummary] = useState<StatsSummary | null>(null)
+  const [weekly, setWeekly] = useState<WeeklyStat[]>([])
+  const [weeks, setWeeks] = useState<4 | 8>(4)
 
   useEffect(() => {
     async function load() {
@@ -31,10 +39,31 @@ export default function DashboardPage() {
           return
         }
         setLoading(false)
+        return
+      }
+      try {
+        const s = await apiClient.get<StatsSummary>('/stats/summary', token)
+        setSummary(s)
+      } catch {
+        // 통계 실패는 무시 (대시보드 핵심 기능 아님)
       }
     }
     load()
   }, [router])
+
+  useEffect(() => {
+    async function loadWeekly() {
+      const token = await getAccessToken()
+      if (!token) return
+      try {
+        const data = await apiClient.get<WeeklyStat[]>(`/stats/weekly?weeks=${weeks}`, token)
+        setWeekly(data)
+      } catch {
+        setWeekly([])
+      }
+    }
+    loadWeekly()
+  }, [weeks])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -52,6 +81,7 @@ export default function DashboardPage() {
   }
 
   const personaName = PERSONAS.find((p) => p.code === profile?.persona)?.name ?? '-'
+  const maxWeekMinutes = Math.max(1, ...weekly.map((w) => w.total_minutes))
 
   return (
     <main className="mx-auto max-w-lg p-6">
@@ -91,12 +121,76 @@ export default function DashboardPage() {
         </section>
       )}
 
+      <section className="mb-8">
+        <div className="mb-3 grid grid-cols-3 gap-2">
+          <div className="rounded-xl border border-gray-200 p-3 text-center">
+            <div className="text-xs text-gray-500">이번 주</div>
+            <div className="mt-1 text-lg font-bold text-gray-900">
+              {summary?.this_week_minutes ?? 0}
+              <span className="text-xs font-normal text-gray-400">분</span>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-200 p-3 text-center">
+            <div className="text-xs text-gray-500">총 운동</div>
+            <div className="mt-1 text-lg font-bold text-gray-900">
+              {summary?.total_sessions ?? 0}
+              <span className="text-xs font-normal text-gray-400">회</span>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-200 p-3 text-center">
+            <div className="text-xs text-gray-500">최근 운동</div>
+            <div className="mt-1 text-lg font-bold text-gray-900">
+              {summary?.last_workout_date ? fmtMonthDay(summary.last_workout_date) : '-'}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-900">주간 운동 시간</h2>
+            <div className="flex gap-1">
+              {([4, 8] as const).map((w) => (
+                <button
+                  key={w}
+                  onClick={() => setWeeks(w)}
+                  className={`rounded-md px-2 py-1 text-xs transition ${
+                    weeks === w
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  {w}주
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {weekly.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-400">기록이 없습니다.</p>
+          ) : (
+            <div className="flex h-32 items-end gap-1.5">
+              {weekly.map((w) => (
+                <div key={w.week_start} className="flex flex-1 flex-col items-center gap-1">
+                  <span className="text-[10px] text-gray-400">{w.total_minutes || ''}</span>
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-t bg-gray-900"
+                      style={{ height: `${(w.total_minutes / maxWeekMinutes) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-gray-400">{fmtMonthDay(w.week_start)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       <nav className="grid gap-3">
         {[
           { label: 'AI 코치에게 루틴 받기', href: '/chat', soon: false },
           { label: '운동 기록하기', href: '/workouts/new', soon: false },
           { label: '캘린더', href: '/calendar', soon: false },
-          { label: '마이페이지', href: '/mypage', soon: true },
         ].map((item) =>
           item.soon ? (
             <div

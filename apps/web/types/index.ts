@@ -147,3 +147,16 @@ export interface ChatResponse {
     structured_data: Recommendation
   } | null
 }
+
+// 통계 요약 (GET /stats/summary)
+export interface StatsSummary {
+  this_week_minutes: number
+  total_sessions: number
+  last_workout_date: string | null
+}
+
+// 주간 운동 시간 (GET /stats/weekly)
+export interface WeeklyStat {
+  week_start: string
+  total_minutes: number
+}
