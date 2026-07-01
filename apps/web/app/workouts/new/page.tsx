@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Plus, Trash2, X } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { takeWorkoutPrefill } from '@/lib/workout-prefill'
@@ -274,8 +275,9 @@ export default function NewWorkoutPage() {
                       <button
                         type="button"
                         onClick={() => setExercises((p) => p.filter((_, i) => i !== ei))}
-                        className="text-sm text-gray-400 hover:text-red-600"
+                        className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-red-200 px-2.5 text-sm font-medium text-red-600 transition hover:border-red-300 hover:bg-red-50"
                       >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                         삭제
                       </button>
                     )}
@@ -288,7 +290,7 @@ export default function NewWorkoutPage() {
                         <input
                           type="number"
                           min={0}
-                          step="0.5"
+                          step="1"
                           placeholder="kg"
                           value={s.weight_kg}
                           onChange={(e) => updateSet(ei, si, { weight_kg: e.target.value })}
@@ -310,9 +312,10 @@ export default function NewWorkoutPage() {
                             onClick={() =>
                               updateExercise(ei, { sets: ex.sets.filter((_, i) => i !== si) })
                             }
-                            className="ml-auto text-gray-400 hover:text-red-600"
+                            aria-label={`${si + 1}세트 삭제`}
+                            className="ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                           >
-                            ✕
+                            <X className="h-4 w-4" aria-hidden="true" />
                           </button>
                         )}
                       </div>
@@ -320,9 +323,10 @@ export default function NewWorkoutPage() {
                     <button
                       type="button"
                       onClick={() => updateExercise(ei, { sets: [...ex.sets, newSet()] })}
-                      className="self-start text-xs text-gray-500 hover:underline"
+                      className="mx-auto inline-flex h-8 w-[92%] items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 text-xs font-medium text-gray-600 transition hover:border-gray-400 hover:bg-gray-50"
                     >
-                      + 세트 추가
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                      세트 추가
                     </button>
                   </div>
                 </div>
