@@ -21,6 +21,7 @@ class OpenAIProvider:
         response = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             response_format={"type": "json_object"},
+            max_tokens=settings.AI_MAX_TOKENS,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},

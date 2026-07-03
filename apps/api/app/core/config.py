@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     ANTHROPIC_API_KEY: str = ""
     CLAUDE_MODEL: str = "claude-opus-4-8"
+    AI_MAX_TOKENS: int = 4096
 
     FRONTEND_ORIGIN: str = "http://localhost:3000"
 

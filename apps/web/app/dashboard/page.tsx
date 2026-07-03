@@ -14,6 +14,34 @@ const fmtMonthDay = (iso: string) => {
   return `${Number(m)}/${Number(d)}`
 }
 
+type WeeklyMetric = 'time' | 'volume' | 'distance'
+
+const round1 = (n: number) => Math.round(n * 10) / 10
+
+const METRICS: Record<
+  WeeklyMetric,
+  { label: string; unit: string; value: (w: WeeklyStat) => number; format: (n: number) => string }
+> = {
+  time: {
+    label: '시간',
+    unit: '분',
+    value: (w) => w.total_minutes,
+    format: (n) => String(Math.round(n)),
+  },
+  volume: {
+    label: '볼륨',
+    unit: 'kg',
+    value: (w) => w.total_volume,
+    format: (n) => (n >= 1000 ? `${round1(n / 1000)}k` : String(Math.round(n))),
+  },
+  distance: {
+    label: '러닝',
+    unit: 'km',
+    value: (w) => w.total_distance_km,
+    format: (n) => String(round1(n)),
+  },
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -21,6 +49,7 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<StatsSummary | null>(null)
   const [weekly, setWeekly] = useState<WeeklyStat[]>([])
   const [weeks, setWeeks] = useState<4 | 8>(4)
+  const [metric, setMetric] = useState<WeeklyMetric>('time')
 
   useEffect(() => {
     async function load() {
@@ -81,7 +110,8 @@ export default function DashboardPage() {
   }
 
   const personaName = PERSONAS.find((p) => p.code === profile?.persona)?.name ?? '-'
-  const maxWeekMinutes = Math.max(1, ...weekly.map((w) => w.total_minutes))
+  const activeMetric = METRICS[metric]
+  const maxWeekValue = Math.max(1, ...weekly.map((w) => activeMetric.value(w)))
 
   return (
     <main className="mx-auto max-w-lg p-6">
@@ -146,8 +176,10 @@ export default function DashboardPage() {
         </div>
 
         <div className="rounded-xl border border-gray-200 p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-900">주간 운동 시간</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-900">
+              주간 통계 <span className="text-xs font-normal text-gray-400">({activeMetric.unit})</span>
+            </h2>
             <div className="flex gap-1">
               {([4, 8] as const).map((w) => (
                 <button
@@ -165,23 +197,57 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          <div className="mb-4 flex gap-1 rounded-lg bg-gray-100 p-1">
+            {(Object.keys(METRICS) as WeeklyMetric[]).map((key) => (
+              <button
+                key={key}
+                onClick={() => setMetric(key)}
+                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition ${
+                  metric === key
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {METRICS[key].label}
+              </button>
+            ))}
+          </div>
+
           {weekly.length === 0 ? (
             <p className="py-8 text-center text-sm text-gray-400">기록이 없습니다.</p>
           ) : (
-            <div className="flex h-32 items-end gap-1.5">
-              {weekly.map((w) => (
-                <div key={w.week_start} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="text-[10px] text-gray-400">{w.total_minutes || ''}</span>
-                  <div className="flex w-full flex-1 items-end">
+            <>
+              <div className="flex items-end gap-1.5" style={{ height: 128 }}>
+                {weekly.map((w) => {
+                  const value = activeMetric.value(w)
+                  const barPx = value > 0 ? Math.max(4, Math.round((value / maxWeekValue) * 104)) : 0
+                  return (
                     <div
-                      className="w-full rounded-t bg-gray-900"
-                      style={{ height: `${(w.total_minutes / maxWeekMinutes) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-gray-400">{fmtMonthDay(w.week_start)}</span>
-                </div>
-              ))}
-            </div>
+                      key={w.week_start}
+                      className="flex flex-1 flex-col items-center justify-end gap-1"
+                    >
+                      <span className="text-[10px] leading-none text-gray-400">
+                        {value ? activeMetric.format(value) : ''}
+                      </span>
+                      <div
+                        className="w-full max-w-[12px] rounded-t bg-blue-400"
+                        style={{ height: barPx }}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="mt-1 flex gap-1.5">
+                {weekly.map((w) => (
+                  <span
+                    key={w.week_start}
+                    className="flex-1 text-center text-[10px] text-gray-400"
+                  >
+                    {fmtMonthDay(w.week_start)}
+                  </span>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </section>

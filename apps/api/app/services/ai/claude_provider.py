@@ -21,7 +21,7 @@ class ClaudeProvider:
         # Claude는 JSON 모드가 없으므로 시스템 프롬프트의 "JSON만 반환" 지시에 의존한다.
         message = client.messages.create(
             model=settings.CLAUDE_MODEL,
-            max_tokens=2048,
+            max_tokens=settings.AI_MAX_TOKENS,
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
         )

@@ -113,7 +113,11 @@ export function RecommendationCard({ workoutType, data, onApply }: Props) {
           </p>
         )}
 
-        <Button onClick={onApply} size="lg" className="mb-2  w-full">
+        <Button
+          onClick={onApply}
+          size="lg"
+          className="mb-2 w-full bg-primary transition-colors hover:bg-gray-700"
+        >
           이 루틴으로 기록하기
         </Button>
       </CardContent>

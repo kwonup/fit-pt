@@ -155,8 +155,10 @@ export interface StatsSummary {
   last_workout_date: string | null
 }
 
-// 주간 운동 시간 (GET /stats/weekly)
+// 주간 통계 (GET /stats/weekly) — 시간/볼륨/러닝거리
 export interface WeeklyStat {
   week_start: string
   total_minutes: number
+  total_volume: number
+  total_distance_km: number
 }

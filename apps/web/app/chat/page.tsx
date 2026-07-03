@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import type { ChatResponse, Persona, UserProfile } from '@/types'
+import type { ChatResponse, Persona, Recommendation, UserProfile, WorkoutType } from '@/types'
 
 type ChatItem =
   | { id: string; role: 'user'; text: string }
@@ -37,11 +37,101 @@ const EXAMPLES = [
   '최근 기록 보고 내일 뭐 하면 좋을지 알려줘',
 ]
 
+const LOADING_MESSAGES = [
+  '코치가 최근 기록을 살펴보고 있어요',
+  '오늘 컨디션에 맞는 방향을 잡는 중이에요',
+  '운동 강도와 휴식 시간을 조율하고 있어요',
+  '곧 루틴이 완성돼요',
+]
+
+const WORKOUT_TYPES = new Set<WorkoutType>(['weight', 'running', 'other'])
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isJsonLikeText(text: string) {
+  const trimmed = text.trim()
+  return trimmed.startsWith('{') || trimmed.startsWith('```') || trimmed.includes('"structured_data"')
+}
+
+function parseJsonObject(text: string): Record<string, unknown> | null {
+  const trimmed = text.trim()
+  const unfenced = trimmed.startsWith('```')
+    ? trimmed.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
+    : trimmed
+
+  try {
+    const parsed = JSON.parse(unfenced)
+    return isRecord(parsed) ? parsed : null
+  } catch {
+    const start = unfenced.indexOf('{')
+    const end = unfenced.lastIndexOf('}')
+    if (start === -1 || end <= start) return null
+    try {
+      const parsed = JSON.parse(unfenced.slice(start, end + 1))
+      return isRecord(parsed) ? parsed : null
+    } catch {
+      return null
+    }
+  }
+}
+
+function isWorkoutType(value: unknown): value is WorkoutType {
+  return typeof value === 'string' && WORKOUT_TYPES.has(value as WorkoutType)
+}
+
+function fallbackRecommendationText(data: Recommendation) {
+  return `${data.title} 루틴을 준비했어요. 아래 카드에서 확인하고 바로 기록할 수 있어요.`
+}
+
+function normalizeChatResponse(res: ChatResponse): ChatResponse {
+  const parsed = parseJsonObject(res.response_text)
+  if (!parsed) {
+    return isJsonLikeText(res.response_text)
+      ? {
+          ...res,
+          response_text:
+            '루틴 응답 형식이 중간에 깨졌어요. 같은 요청을 한 번만 다시 보내주시면 카드 형태로 다시 만들어드릴게요.',
+        }
+      : res
+  }
+
+  const recommendation = isRecord(parsed.recommendation) ? parsed.recommendation : null
+  const workoutType = recommendation
+    ? recommendation.workout_type
+    : parsed.workout_type ?? parsed.type
+  const structuredData = recommendation
+    ? recommendation.structured_data
+    : parsed.structured_data ?? (isWorkoutType(parsed.type) ? parsed : null)
+
+  if (!isWorkoutType(workoutType) || !isRecord(structuredData)) {
+    return res
+  }
+
+  const typedStructuredData = structuredData as unknown as Recommendation
+  const responseText =
+    typeof parsed.response_text === 'string' && !parseJsonObject(parsed.response_text)
+      ? parsed.response_text
+      : fallbackRecommendationText(typedStructuredData)
+
+  return {
+    ...res,
+    response_text: responseText,
+    recommendation: res.recommendation ?? {
+      id: typeof recommendation?.id === 'string' ? recommendation.id : res.message_id,
+      workout_type: workoutType,
+      structured_data: typedStructuredData,
+    },
+  }
+}
+
 export default function ChatPage() {
   const router = useRouter()
   const [items, setItems] = useState<ChatItem[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -54,6 +144,20 @@ export default function ChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [items, loading])
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStep(0)
+      return
+    }
+
+    setLoadingStep(0)
+    const timer = window.setInterval(() => {
+      setLoadingStep((prev) => Math.min(prev + 1, LOADING_MESSAGES.length - 1))
+    }, 2200)
+
+    return () => window.clearInterval(timer)
+  }, [loading])
 
   // 현재 페르소나 로드 (설정 다이얼로그 표시용)
   useEffect(() => {
@@ -113,7 +217,9 @@ export default function ChatPage() {
     }
 
     try {
-      const res = await apiClient.post<ChatResponse>('/chat', { message: text }, token)
+      const res = normalizeChatResponse(
+        await apiClient.post<ChatResponse>('/chat', { message: text }, token)
+      )
       setItems((prev) => [
         ...prev,
         {
@@ -208,9 +314,21 @@ export default function ChatPage() {
               )
             )}
             {loading && (
-              <div className="self-start">
-                <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-sm text-muted-foreground">
-                  코치가 생각 중...
+              <div className="self-start max-w-[90%]">
+                <div className="flex items-center gap-3 rounded-2xl rounded-bl-sm bg-muted px-4 py-3 text-sm text-muted-foreground">
+                  <span
+                    className="flex h-6 w-9 shrink-0 items-center justify-center gap-1 rounded-full bg-white shadow-sm ring-1 ring-gray-200"
+                    aria-hidden="true"
+                  >
+                    {[0, 1, 2].map((dot) => (
+                      <span
+                        key={dot}
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-500"
+                        style={{ animationDelay: `${dot * 140}ms` }}
+                      />
+                    ))}
+                  </span>
+                  <span>{LOADING_MESSAGES[loadingStep]}</span>
                 </div>
               </div>
             )}

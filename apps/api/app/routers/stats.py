@@ -13,34 +13,21 @@ async def get_weekly_stats(
     user_id: str = Depends(get_current_user_id),
     supabase: Client = Depends(get_supabase),
 ):
+    """주별 운동 시간(분) / 웨이트 볼륨(kg) / 러닝 거리(km)를 함께 반환한다."""
     weeks = 8 if weeks == 8 else 4
-    today = date.today()
-    this_week_start = today - timedelta(days=today.weekday())
-    first_week_start = this_week_start - timedelta(weeks=weeks - 1)
 
-    result = (
-        supabase.table("workout_sessions")
-        .select("workout_date, duration_minutes")
-        .eq("user_id", user_id)
-        .gte("workout_date", first_week_start.isoformat())
-        .lte("workout_date", today.isoformat())
-        .execute()
-    )
-
-    totals = {
-        (first_week_start + timedelta(weeks=index)).isoformat(): 0
-        for index in range(weeks)
-    }
-    for session in result.data:
-        workout_date = date.fromisoformat(session["workout_date"])
-        week_start = workout_date - timedelta(days=workout_date.weekday())
-        key = week_start.isoformat()
-        if key in totals:
-            totals[key] += session.get("duration_minutes") or 0
+    result = supabase.rpc(
+        "get_weekly_stats", {"p_user_id": user_id, "p_weeks": weeks}
+    ).execute()
 
     return [
-        {"week_start": week_start, "total_minutes": total_minutes}
-        for week_start, total_minutes in totals.items()
+        {
+            "week_start": row["week_start"],
+            "total_minutes": row.get("total_minutes") or 0,
+            "total_volume": row.get("total_volume") or 0,
+            "total_distance_km": row.get("total_distance_km") or 0,
+        }
+        for row in (result.data or [])
     ]
 
 
