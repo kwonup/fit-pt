@@ -1,4 +1,5 @@
 import logging
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
@@ -24,7 +25,7 @@ async def send_message(
     AI 챗봇 메시지 전송.
 
     프로필 + 최근 30일 기록 → AI provider(OpenAI/Claude) 호출 → structured_data 파싱
-    → ai_recommendations / chat_messages 저장 → 응답 반환.
+    → 추천이면 ai_recommendations 저장 → 응답 반환.
     """
     # 1. 사용자 프로필 조회 (없어도 진행)
     profile_result = (
@@ -49,14 +50,8 @@ async def send_message(
 
     result = parse_ai_response(raw)
 
-    # 3. 사용자 메시지 저장
-    supabase.table("chat_messages").insert(
-        {"user_id": user_id, "role": "user", "content": body.message}
-    ).execute()
-
-    # 4. 추천이면 ai_recommendations 저장
+    # 3. 추천이면 ai_recommendations만 저장
     recommendation = None
-    recommendation_id = None
     if result.structured_data is not None and result.workout_type is not None:
         rec = (
             supabase.table("ai_recommendations")
@@ -72,30 +67,15 @@ async def send_message(
             .execute()
             .data[0]
         )
-        recommendation_id = rec["id"]
         recommendation = {
             "id": rec["id"],
             "workout_type": result.workout_type,
             "structured_data": result.structured_data,
         }
 
-    # 5. AI 응답 메시지 저장 (추천이면 recommendation_id 연결)
-    assistant_message = (
-        supabase.table("chat_messages")
-        .insert(
-            {
-                "user_id": user_id,
-                "role": "assistant",
-                "content": result.response_text,
-                "recommendation_id": recommendation_id,
-            }
-        )
-        .execute()
-        .data[0]
-    )
-
     return {
-        "message_id": assistant_message["id"],
+        # 현재 message_id는 프런트엔드 목록 key로만 사용하므로 DB ID가 필요하지 않다.
+        "message_id": str(uuid4()),
         "response_text": result.response_text,
         "recommendation": recommendation,
     }

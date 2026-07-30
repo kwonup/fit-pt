@@ -4,6 +4,7 @@ import type { Recommendation, WorkoutType } from '@/types'
 const KEY = 'fitpt:workout-prefill'
 
 export interface WorkoutPrefill {
+  ai_recommendation_id: string | null
   workout_type: WorkoutType
   structured_data: Recommendation
 }

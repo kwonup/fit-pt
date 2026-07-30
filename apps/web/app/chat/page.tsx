@@ -119,7 +119,8 @@ function normalizeChatResponse(res: ChatResponse): ChatResponse {
     ...res,
     response_text: responseText,
     recommendation: res.recommendation ?? {
-      id: typeof recommendation?.id === 'string' ? recommendation.id : res.message_id,
+      // 프런트엔드에서만 복구한 추천은 DB에 저장된 추천 ID가 없다.
+      id: null,
       workout_type: workoutType,
       structured_data: typedStructuredData,
     },
@@ -237,6 +238,7 @@ export default function ChatPage() {
 
   function applyRecommendation(rec: NonNullable<ChatResponse['recommendation']>) {
     setWorkoutPrefill({
+      ai_recommendation_id: rec.id,
       workout_type: rec.workout_type,
       structured_data: rec.structured_data,
     })

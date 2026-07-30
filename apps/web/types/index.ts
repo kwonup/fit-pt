@@ -142,7 +142,7 @@ export interface ChatResponse {
   message_id: string
   response_text: string
   recommendation: {
-    id: string
+    id: string | null
     workout_type: WorkoutType
     structured_data: Recommendation
   } | null

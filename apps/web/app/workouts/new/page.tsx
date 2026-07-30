@@ -38,6 +38,7 @@ export default function NewWorkoutPage() {
   const [memo, setMemo] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [aiRecommendationId, setAiRecommendationId] = useState<string | null>(null)
 
   // 웨이트
   const [weightDuration, setWeightDuration] = useState('')
@@ -57,8 +58,9 @@ export default function NewWorkoutPage() {
   useEffect(() => {
     const prefill = takeWorkoutPrefill()
     if (!prefill) return
-    const { workout_type, structured_data: rec } = prefill
+    const { ai_recommendation_id, workout_type, structured_data: rec } = prefill
 
+    setAiRecommendationId(ai_recommendation_id)
     setType(workout_type)
     setTitle(rec.title)
 
@@ -130,6 +132,7 @@ export default function NewWorkoutPage() {
         title: title.trim(),
         duration_minutes: weightDuration === '' ? null : Number(weightDuration),
         memo: memo || null,
+        ai_recommendation_id: aiRecommendationId,
         exercises: cleaned,
       },
       token
@@ -154,6 +157,7 @@ export default function NewWorkoutPage() {
         avg_pace: pace || undefined,
         intensity: intensity || undefined,
         memo: memo || null,
+        ai_recommendation_id: aiRecommendationId,
       },
       token
     )
@@ -172,6 +176,7 @@ export default function NewWorkoutPage() {
         content: otherContent.trim(),
         duration_minutes: otherDuration === '' ? null : Number(otherDuration),
         memo: memo || null,
+        ai_recommendation_id: aiRecommendationId,
       },
       token
     )

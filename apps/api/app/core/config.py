@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings
 
 
@@ -11,7 +13,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     ANTHROPIC_API_KEY: str = ""
-    CLAUDE_MODEL: str = "claude-opus-4-8"
+    CLAUDE_MODEL: str = "claude-haiku-4-5-20251001"
+    CLAUDE_EFFORT: Literal["low", "medium", "high"] = "medium"
+    CLAUDE_THINKING_ENABLED: bool = False
     AI_MAX_TOKENS: int = 4096
 
     FRONTEND_ORIGIN: str = "http://localhost:3000"
