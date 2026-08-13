@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import re
 from dataclasses import dataclass
@@ -58,10 +59,12 @@ ROUTE_PLANS = {
 
 ROUTER_SYSTEM_PROMPT = """
 너는 Fit-PT 질문 분류기다. 사용자 질문을 아래 intent 중 정확히 하나로 분류한다.
+표면적인 단어가 아니라 질문의 의미와 사용자가 원하는 결과를 기준으로 판단한다.
 
 - CHAT: 인사, 감사, 감정 표현, 일반 대화
 - WORKOUT_HISTORY: 사용자의 과거 운동 횟수, 날짜, 중량, 거리, 페이스 등 사실 조회
-- FITNESS_KNOWLEDGE: 사용자 기록과 무관한 일반 운동 원리나 방법 질문
+- FITNESS_KNOWLEDGE: 사용자 기록과 무관한 일반 운동 원리·생리·방법 질문. 근비대, 근성장,
+  근육 키우기, 근육량 증가, 운동 강도, 1RM, 호르몬 반응처럼 표현이 달라도 포함한다.
 - PERSONAL_COACHING: 사용자 프로필이나 실제 운동 기록을 바탕으로 한 분석·조언
 - ROUTINE_RECOMMENDATION: 실제로 수행할 운동 루틴이나 프로그램 생성 요청
 
@@ -82,7 +85,7 @@ class ProviderIntentClassifier:
 
     def classify(self, question: str) -> Intent:
         raw = self.provider.generate(ROUTER_SYSTEM_PROMPT, question)
-        return RouteDecision.model_validate_json(raw).intent
+        return _parse_route_decision(raw).intent
 
 
 class QuestionRouter:
@@ -290,3 +293,34 @@ def _is_clear_history_question(question: str) -> bool:
 def _is_clear_chat(question: str) -> bool:
     stripped = question.rstrip(".!?~ ")
     return stripped in CHAT_EXACT_PHRASES or _contains_any(question, CHAT_PHRASES)
+
+
+def _parse_route_decision(raw: str) -> RouteDecision:
+    """코드 블록이나 짧은 설명이 붙은 provider 응답에서 JSON 객체를 검증한다."""
+
+    text = raw.strip()
+    if not text:
+        raise ValueError("LLM Router 응답이 비어 있습니다.")
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        data = _find_json_object(text)
+
+    if not isinstance(data, dict):
+        raise ValueError("LLM Router 응답에 JSON 객체가 없습니다.")
+    return RouteDecision.model_validate(data)
+
+
+def _find_json_object(text: str) -> dict | None:
+    decoder = json.JSONDecoder()
+    for index, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            candidate, _ = decoder.raw_decode(text[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(candidate, dict):
+            return candidate
+    return None

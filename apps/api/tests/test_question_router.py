@@ -74,6 +74,23 @@ class QuestionRouterTests(unittest.TestCase):
         self.assertEqual(result.source, RouteSource.LLM)
         self.assertEqual(classifier.calls, ["벤치프레스가 요즘 고민이야"])
 
+    def test_semantic_fitness_expressions_use_llm_classifier(self) -> None:
+        classifier = FakeClassifier(Intent.FITNESS_KNOWLEDGE)
+        router = QuestionRouter(classifier)
+        questions = [
+            "근성장에 적절한 반복 수는?",
+            "근육을 키우려면 몇 회 운동해야 좋아?",
+            "40%, 60%, 80% 1RM 중 어떤 강도가 호르몬 반응이 좋아?",
+        ]
+
+        for question in questions:
+            with self.subTest(question=question):
+                result = router.route(question)
+                self.assertEqual(result.intent, Intent.FITNESS_KNOWLEDGE)
+                self.assertEqual(result.source, RouteSource.LLM)
+
+        self.assertEqual(classifier.calls, [question.lower() for question in questions])
+
     def test_llm_failure_falls_back_to_chat(self) -> None:
         classifier = FakeClassifier(error=ValueError("invalid output"))
         router = QuestionRouter(classifier)
@@ -101,6 +118,35 @@ class QuestionRouterTests(unittest.TestCase):
 
         self.assertEqual(intent, Intent.FITNESS_KNOWLEDGE)
         self.assertEqual(provider.calls[0][1], "근비대란?")
+
+    def test_provider_classifier_accepts_json_code_fence(self) -> None:
+        provider = FakeProvider('```json\n{"intent":"FITNESS_KNOWLEDGE"}\n```')
+        classifier = ProviderIntentClassifier(provider)
+
+        intent = classifier.classify("근성장에 적절한 반복 수는?")
+
+        self.assertEqual(intent, Intent.FITNESS_KNOWLEDGE)
+
+    def test_provider_classifier_accepts_explanation_around_json(self) -> None:
+        provider = FakeProvider(
+            '분류 결과입니다.\n{"intent":"FITNESS_KNOWLEDGE"}\n이상입니다.'
+        )
+        classifier = ProviderIntentClassifier(provider)
+
+        intent = classifier.classify("호르몬 반응 차이는?")
+
+        self.assertEqual(intent, Intent.FITNESS_KNOWLEDGE)
+
+    def test_router_prompt_explains_semantic_fitness_expressions(self) -> None:
+        provider = FakeProvider('{"intent":"FITNESS_KNOWLEDGE"}')
+        classifier = ProviderIntentClassifier(provider)
+
+        classifier.classify("근성장하려면 어떻게 해야 해?")
+
+        system_prompt = provider.calls[0][0]
+        self.assertIn("표면적인 단어가 아니라", system_prompt)
+        self.assertIn("근비대, 근성장", system_prompt)
+        self.assertIn("1RM, 호르몬 반응", system_prompt)
 
     def test_provider_classifier_rejects_extra_fields(self) -> None:
         provider = FakeProvider('{"intent":"CHAT","reason":"인사"}')
