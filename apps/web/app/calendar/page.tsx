@@ -106,14 +106,18 @@ export default function CalendarPage() {
 
   return (
     <main className="mx-auto max-w-lg p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <Link href="/dashboard" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
+      <header className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <Link
+          href="/dashboard"
+          className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'justify-self-start')}
+        >
           <ArrowLeft data-icon="inline-start" aria-hidden="true" />
           대시보드
         </Link>
+        <h1 className="text-base font-bold text-gray-900">내 운동 캘린더</h1>
         <Link
           href="/workouts/new"
-          className={cn(buttonVariants({ size: 'sm' }))}
+          className={cn(buttonVariants({ size: 'sm' }), 'justify-self-end')}
         >
           <Plus data-icon="inline-start" aria-hidden="true" />
           기록

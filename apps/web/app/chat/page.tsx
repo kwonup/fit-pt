@@ -261,7 +261,7 @@ export default function ChatPage() {
         >
           <ArrowLeft aria-hidden="true" />
         </Link>
-        <h1 className="text-base font-bold">AI 코치</h1>
+        <h1 className="text-base font-bold">내 핏피티 코치</h1>
         <div className="flex justify-end">
           <Button
             variant="outline"

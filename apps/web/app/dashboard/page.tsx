@@ -120,17 +120,17 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-lg p-6">
-      <header className="mb-8 flex items-center justify-between">
-        <h1>
+      <header className="mb-8 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="justify-self-start">
           <BrandLogo variant="mark" />
-          <span className="sr-only">핏피티</span>
-        </h1>
+        </div>
+        <h1 className="text-base font-bold text-gray-900">프로필</h1>
         <Button
           onClick={handleLogout}
           disabled={loggingOut}
           variant="outline"
           size="sm"
-          className="text-gray-600"
+          className="justify-self-end text-gray-600"
         >
           <LogOut data-icon="inline-start" aria-hidden="true" />
           {loggingOut ? '로그아웃 중' : '로그아웃'}
