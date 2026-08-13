@@ -370,6 +370,8 @@ Supabase Dashboard의 SQL Editor에서 [`supabase/migrations`](./supabase/migrat
 
 현재 저장소에는 Supabase CLI용 `supabase/config.toml`이 없으므로, 별도의 `supabase init`, 로그인, 프로젝트 연결 없이 `supabase db push`만 실행하는 방식은 사용할 수 없습니다.
 
+운동 전문지식 RAG 문서의 적재 방법은 [`docs/rag-ingestion.md`](./docs/rag-ingestion.md)를 참고합니다. 적재 작업은 FastAPI 요청과 분리된 운영자용 CLI로 실행합니다.
+
 ### 4. 백엔드 실행
 
 ```bash
