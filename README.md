@@ -370,7 +370,7 @@ Supabase Dashboard의 SQL Editor에서 [`supabase/migrations`](./supabase/migrat
 
 현재 저장소에는 Supabase CLI용 `supabase/config.toml`이 없으므로, 별도의 `supabase init`, 로그인, 프로젝트 연결 없이 `supabase db push`만 실행하는 방식은 사용할 수 없습니다.
 
-운동 전문지식 RAG 문서의 적재 방법은 [`docs/rag-ingestion.md`](./docs/rag-ingestion.md)를 참고합니다. 적재 작업은 FastAPI 요청과 분리된 운영자용 CLI로 실행합니다.
+운동 전문지식 문서 적재는 [`docs/rag-ingestion.md`](./docs/rag-ingestion.md), Router부터 웹 답변까지의 구조와 점검 방법은 [`docs/ai-rag-operations.md`](./docs/ai-rag-operations.md)를 참고합니다. 적재 작업은 FastAPI 요청과 분리된 운영자용 CLI로 실행합니다.
 
 ### 4. 백엔드 실행
 
@@ -461,10 +461,10 @@ npm run start
 | API 스모크 테스트 | FastAPI TestClient로 `GET /health` 응답 `200` 확인 |
 | 요청 검증 | Pydantic 스키마로 필수값과 숫자 범위 검증 |
 | Lint | `lint` 스크립트는 있으나 ESLint 설정 파일이 없어 현재 비대화형 실행 불가 |
-| 자동화 테스트 | 단위·통합·E2E 테스트 미구성 |
+| 자동화 테스트 | Python `unittest` 기반 AI Router·RAG·context·추천 계약 테스트 구성 |
 | CI/CD | GitHub Actions 등 자동화 설정 미구성 |
 
-현재 자동화 테스트가 없으므로 위 결과는 이번 저장소 분석에서 수행한 정적 검사와 스모크 테스트이며, 회귀 테스트 체계를 의미하지 않습니다.
+AI 관련 회귀 테스트는 `cd apps/api` 후 `python -m unittest discover -s tests -v`로 실행합니다. 실제 Supabase embedding 검색 품질과 브라우저 동작은 운영 데이터와 외부 서비스에 의존하므로 별도 수동 검증이 필요합니다.
 
 ## 현재 한계와 개선 계획
 
@@ -473,9 +473,9 @@ npm run start
 - **기록 전체 수정:** 현재 웹에서는 상세 조회와 삭제만 가능하고, `PUT /workouts/{id}`도 공통 필드만 수정합니다. 웨이트 종목·세트와 러닝 상세 수정 UI/API가 필요합니다.
 - **추천 전환 추적:** DB와 생성 스키마에는 `ai_recommendation_id`가 있지만 프론트엔드가 추천 ID를 기록 요청에 전달하지 않습니다. 이를 연결해 추천이 실제 기록으로 전환됐는지 추적할 수 있어야 합니다.
 - **채팅 이력 조회:** 메시지와 추천은 저장되지만 `GET` API와 재접속 시 대화를 복원하는 UI가 없습니다.
-- **추천 스키마 강화:** 현재 파서는 JSON 여부와 운동 타입 일치를 중심으로 확인합니다. 타입별 필수 필드 전체를 검증하는 Pydantic/JSON Schema 계층을 추가할 수 있습니다.
+- **Provider-native 구조화 출력:** 추천 카드는 현재 Pydantic/JSON Schema로 후처리 검증합니다. 공급자별 native structured output을 적용하면 생성 단계의 형식 준수를 더 강화할 수 있습니다.
 - **입력 규칙 보완:** 미래 날짜 기록 제한과 추천 폼의 임시저장·복구가 구현되어 있지 않습니다.
-- **품질 자동화:** 단위·API 통합·E2E 테스트, ESLint 설정, CI 파이프라인을 추가해야 합니다.
+- **품질 자동화:** AI 단위·통합 테스트 외에 브라우저 E2E, ESLint 설정, CI 파이프라인을 추가해야 합니다.
 - **배포와 문서 동기화:** Vercel/Render 배포 설정, 라이브 URL, 대표 이미지 또는 데모 GIF를 추가하고 오래된 프로젝트 체크리스트를 현재 구현 상태와 맞춰야 합니다.
 
 ## 프로젝트 회고

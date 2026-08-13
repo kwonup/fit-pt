@@ -33,19 +33,20 @@ python -m pip install -r requirements.txt
 
 `SUPABASE_SERVICE_ROLE_KEY`는 지식 테이블에 쓰기 위해 필요하므로 브라우저나 로그에 노출하면 안 됩니다.
 
-## 샘플 fixture 적재
+## Markdown 문서 적재
 
-저장소의 샘플은 파이프라인 검증을 위해 자체 작성한 메모이며 실제 논문이 아닙니다.
+승인한 운동 지식을 UTF-8 Markdown으로 정리한 경우 다음처럼 적재합니다.
 
 ```powershell
 cd apps/api
-python scripts/ingest_knowledge.py fixtures/knowledge/progressive-overload.md `
-  --title "점진적 과부하 학습용 메모" `
-  --source-name "Fit-PT 프로젝트" `
-  --document-type note `
+python scripts/ingest_knowledge.py C:\knowledge\hypertrophy-guide-ko.md `
+  --title "근비대 운동 근거 정리" `
+  --source-name "원문 발행 기관" `
+  --source-url "https://example.org/original" `
+  --document-type article `
   --language ko `
-  --category progressive-overload `
-  --license-info "프로젝트 테스트 전용"
+  --category hypertrophy `
+  --license-info "원문 이용 조건 및 요약문 작성 기준 확인"
 ```
 
 실제 PDF는 출처와 이용 조건을 확인한 뒤 다음처럼 적재합니다.
@@ -79,4 +80,4 @@ group by document_id
 order by chunk_count desc;
 ```
 
-현재 단계는 적재까지만 구현합니다. 챗봇이 질문으로 관련 chunk를 검색하는 Retriever는 다음 커밋에서 `match_knowledge_chunks` RPC와 연결합니다.
+적재 후 Router, Retriever, 웹 답변까지 검증하는 방법은 [`ai-rag-operations.md`](./ai-rag-operations.md)를 참고합니다.
