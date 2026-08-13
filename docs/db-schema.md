@@ -3,7 +3,7 @@
 - **DB:** Supabase (PostgreSQL)
 - **인증:** Supabase Auth (`auth.users` 기본 제공)
 - **보안:** 모든 테이블에 Row Level Security (RLS) 적용
-- **마이그레이션 파일:** `supabase/migrations/001_initial_schema.sql`
+- **마이그레이션 파일:** `supabase/migrations/001_initial_schema.sql` ~ `007_knowledge_rag.sql`
 
 ## ERD 개요
 
@@ -20,6 +20,9 @@ auth.users (Supabase 기본)
 
 workout_sessions.ai_recommendation_id → ai_recommendations (운동반영하기로 생성 시)
 chat_messages.recommendation_id       → ai_recommendations (추천 메시지와 연결)
+
+knowledge_documents (공용 운동 전문지식)
+  └── knowledge_chunks (1:N, pgvector embedding)
 ```
 
 ## 테이블 정의
@@ -131,6 +134,47 @@ AI 추천 이력. **structured_data가 "운동반영하기"의 입력값.**
 | recommendation_id | UUID | ai_recommendations 참조, nullable | 추천 카드 연결 |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
+### knowledge_documents
+
+운동 논문·공공 가이드라인 등 모든 사용자에게 공통으로 제공하는 전문지식 원본의 메타데이터.
+사용자 프로필, 운동 기록, 운동 메모는 이 테이블에 저장하지 않습니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | UUID (PK) | uuid_generate_v4() | 문서 ID |
+| title | TEXT | NOT NULL, 공백 불가 | 문서 제목 |
+| source_name | TEXT | NOT NULL, 공백 불가 | 출판처·기관·저널명 |
+| source_url | TEXT | nullable | 원문 URL 또는 DOI URL |
+| document_type | TEXT | paper/guideline/article/note/other | 문서 종류 |
+| language | TEXT | DEFAULT unknown | 원문 언어 |
+| published_at | DATE | nullable | 발행일 |
+| license_info | TEXT | nullable | 라이선스·사용 권한 정보 |
+| content_hash | TEXT | UNIQUE, NOT NULL | 중복 적재 방지용 원문 해시 |
+| metadata | JSONB | 객체, DEFAULT `{}` | 저자·DOI 등 확장 메타데이터 |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | DEFAULT NOW() | 트리거로 자동 갱신 |
+
+### knowledge_chunks
+
+전문지식 문서를 검색 가능한 작은 단위로 나눈 본문과 embedding.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | UUID (PK) | uuid_generate_v4() | chunk ID |
+| document_id | UUID | knowledge_documents 참조, ON DELETE CASCADE | 원본 문서 |
+| chunk_index | INTEGER | 0 이상, 문서 내 UNIQUE | 문서 내 순서 |
+| content | TEXT | NOT NULL, 공백 불가 | 검색·프롬프트 주입용 본문 |
+| embedding | VECTOR(1536) | NOT NULL | `text-embedding-3-small` 벡터 |
+| metadata | JSONB | 객체, DEFAULT `{}` | 페이지·섹션·시작 위치 등 |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+
+`match_knowledge_chunks` RPC는 질문 embedding과 cosine distance(`<=>`)를 비교하여 최대 20개의 관련 chunk를 반환합니다. 반환 metadata에는 문서 제목, 출처, URL, 라이선스, 페이지 등 출처 표시에 필요한 정보가 합쳐집니다.
+
+현재는 작은 초기 corpus의 검색 정확도를 우선해 벡터 인덱스를 만들지 않습니다. chunk 수와 지연시간을 측정한 뒤 `vector_cosine_ops` HNSW 인덱스를 별도 마이그레이션으로 추가합니다.
+
+> embedding 규격은 `OpenAI text-embedding-3-small`, 1536차원으로 고정합니다.
+> 모델 또는 차원을 변경하려면 DB vector 차원을 함께 변경하고 저장된 모든 chunk를 다시 embedding해야 합니다.
+
 ---
 
 ## AI structured_data JSON 구조
@@ -202,9 +246,12 @@ AI 추천 이력. **structured_data가 "운동반영하기"의 입력값.**
 | other_sessions | 본인 session만 |
 | ai_recommendations | `user_id = auth.uid()` + `WITH CHECK` |
 | chat_messages | `user_id = auth.uid()` + `WITH CHECK` |
+| knowledge_documents | anon/authenticated 정책 없음. service_role 전용 |
+| knowledge_chunks | anon/authenticated 정책 없음. service_role 전용 |
 
 > FastAPI는 `service_role_key`로 Supabase에 접근하므로 RLS를 우회합니다.
 > 대신 **모든 쿼리에서 `user_id = {current_user_id}` 필터를 코드 레벨에서 적용**해야 합니다.
+> 공용 지식 RAG의 테이블과 검색 RPC도 프론트엔드에 공개하지 않고 FastAPI에서만 호출합니다.
 
 ## 인덱스
 

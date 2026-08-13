@@ -366,7 +366,7 @@ Copy-Item apps/api/.env.example apps/api/.env
 
 ### 3. 데이터베이스 초기화
 
-Supabase Dashboard의 SQL Editor에서 [`supabase/migrations`](./supabase/migrations)의 `001_initial_schema.sql`부터 `006_weekly_stats.sql`까지 번호순으로 실행합니다.
+Supabase Dashboard의 SQL Editor에서 [`supabase/migrations`](./supabase/migrations)의 `001_initial_schema.sql`부터 `007_knowledge_rag.sql`까지 번호순으로 실행합니다.
 
 현재 저장소에는 Supabase CLI용 `supabase/config.toml`이 없으므로, 별도의 `supabase init`, 로그인, 프로젝트 연결 없이 `supabase db push`만 실행하는 방식은 사용할 수 없습니다.
 
@@ -438,10 +438,15 @@ npm run start
 | `SUPABASE_SERVICE_ROLE_KEY` | 서버 전용 DB 접근 키. 프론트 노출 금지 | 필수 |
 | `AI_PROVIDER` | 사용할 공급자: `openai` 또는 `claude` | 선택, 기본 `openai` |
 | `AI_MAX_TOKENS` | AI 응답 최대 토큰 수 | 선택, 기본 `4096` |
-| `OPENAI_API_KEY` | OpenAI 인증 키 | OpenAI 선택 시 필수 |
+| `OPENAI_API_KEY` | OpenAI 채팅·RAG embedding 인증 키 | OpenAI 채팅 또는 RAG 사용 시 필수 |
 | `OPENAI_MODEL` | 사용할 OpenAI 모델명 | 선택 |
 | `ANTHROPIC_API_KEY` | Anthropic 인증 키 | Claude 선택 시 필수 |
 | `CLAUDE_MODEL` | 사용할 Claude 모델명 | 선택 |
+| `EMBEDDING_PROVIDER` | RAG embedding 공급자. 현재 `openai` 고정 | 선택, 기본 `openai` |
+| `OPENAI_EMBEDDING_MODEL` | RAG embedding 모델. 현재 `text-embedding-3-small` 고정 | 선택 |
+| `EMBEDDING_DIMENSIONS` | DB vector와 동일해야 하는 embedding 차원. 현재 `1536` 고정 | 선택 |
+| `RAG_TOP_K` | 질문당 검색할 최대 chunk 수 | 선택, 기본 `4` |
+| `RAG_MATCH_THRESHOLD` | cosine similarity 최소 기준 | 선택, 기본 `0.70` |
 | `FRONTEND_ORIGIN` | CORS를 허용할 프론트엔드 Origin | 선택, 기본 `http://localhost:3000` |
 
 ## 검증 및 코드 품질
