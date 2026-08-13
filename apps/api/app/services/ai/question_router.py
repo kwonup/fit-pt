@@ -105,8 +105,8 @@ class QuestionRouter:
             return RouteResult(Intent.CHAT, RouteSource.FALLBACK)
 
 
-def build_question_router() -> QuestionRouter:
-    return QuestionRouter(ProviderIntentClassifier(get_provider()))
+def build_question_router(provider: AIProvider | None = None) -> QuestionRouter:
+    return QuestionRouter(ProviderIntentClassifier(provider or get_provider()))
 
 
 def get_route_plan(intent: Intent) -> RoutePlan:
