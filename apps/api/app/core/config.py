@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # AI provider 선택: "openai" 또는 "claude"
     AI_PROVIDER: str = "openai"
     OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_MODEL: str = "gpt-5.6-luna"
     ANTHROPIC_API_KEY: str = ""
     CLAUDE_MODEL: str = "claude-haiku-4-5-20251001"
     CLAUDE_EFFORT: Literal["low", "medium", "high"] = "medium"
