@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, Save, Trash2, X } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { takeWorkoutPrefill } from '@/lib/workout-prefill'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { WorkoutType } from '@/types'
 
 type SetInput = { weight_kg: string; reps: string }
@@ -215,7 +217,8 @@ export default function NewWorkoutPage() {
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">운동 기록</h1>
-        <Link href="/dashboard" className="text-sm text-gray-500 hover:underline">
+        <Link href="/dashboard" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
+          <X data-icon="inline-start" aria-hidden="true" />
           취소
         </Link>
       </header>
@@ -226,7 +229,8 @@ export default function NewWorkoutPage() {
             type="button"
             key={t}
             onClick={() => setType(t)}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+            aria-pressed={type === t}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 ${
               type === t
                 ? 'border-gray-900 bg-gray-900 text-white'
                 : 'border-gray-300 text-gray-700 hover:border-gray-400'
@@ -339,9 +343,10 @@ export default function NewWorkoutPage() {
               <button
                 type="button"
                 onClick={() => setExercises((p) => [...p, newExercise()])}
-                className="self-start rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-600 hover:border-gray-400"
+                className="inline-flex h-10 items-center justify-center gap-1.5 self-start rounded-xl border border-dashed border-gray-300 bg-white px-4 text-sm font-medium text-gray-600 transition hover:border-gray-500 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
               >
-                + 종목 추가
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                종목 추가
               </button>
             </section>
 
@@ -408,7 +413,8 @@ export default function NewWorkoutPage() {
                     type="button"
                     key={lv}
                     onClick={() => setIntensity(intensity === lv ? '' : lv)}
-                    className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+                    aria-pressed={intensity === lv}
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 ${
                       intensity === lv
                         ? 'border-gray-900 bg-gray-900 text-white'
                         : 'border-gray-300 text-gray-700 hover:border-gray-400'
@@ -463,13 +469,15 @@ export default function NewWorkoutPage() {
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-50"
+          size="lg"
+          className="w-full"
         >
+          <Save data-icon="inline-start" aria-hidden="true" />
           {loading ? '저장 중...' : '기록 저장'}
-        </button>
+        </Button>
       </form>
     </main>
   )

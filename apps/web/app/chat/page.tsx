@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Settings } from 'lucide-react'
+import { ArrowLeft, Send, Settings } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { setWorkoutPrefill } from '@/lib/workout-prefill'
 import { PERSONAS } from '@/lib/constants'
 import { RecommendationCard } from '@/components/recommendation-card'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
@@ -253,13 +254,17 @@ export default function ChatPage() {
   return (
     <main className="mx-auto flex h-screen max-w-lg flex-col p-4">
       <header className="mb-3 flex shrink-0 items-center justify-between">
-        <Link href="/dashboard" className="w-16 text-sm text-muted-foreground hover:underline">
-          ← 대시보드
+        <Link
+          href="/dashboard"
+          aria-label="대시보드로 이동"
+          className={cn(buttonVariants({ variant: 'outline', size: 'icon-sm' }))}
+        >
+          <ArrowLeft aria-hidden="true" />
         </Link>
         <h1 className="text-base font-bold">AI 코치</h1>
-        <div className="flex w-16 justify-end">
+        <div className="flex justify-end">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon-sm"
             onClick={openSettings}
             aria-label="코치 설정"
@@ -357,6 +362,7 @@ export default function ChatPage() {
           disabled={loading}
         />
         <Button type="submit" disabled={loading || !input.trim()} size="lg">
+          <Send data-icon="inline-start" aria-hidden="true" />
           전송
         </Button>
       </form>
@@ -376,7 +382,8 @@ export default function ChatPage() {
                   type="button"
                   disabled={savingPersona}
                   onClick={() => setSelectedPersona(p.code)}
-                  className={`rounded-lg border px-4 py-3 text-left transition disabled:opacity-50 ${
+                  aria-pressed={selected}
+                  className={`rounded-xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 ${
                     selected
                       ? 'border-foreground bg-muted'
                       : 'border-border hover:border-foreground/40'

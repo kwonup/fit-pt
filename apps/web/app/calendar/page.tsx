@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { WORKOUT_TYPE_META } from '@/lib/constants'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { WorkoutSession, WorkoutType } from '@/types'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -104,26 +107,36 @@ export default function CalendarPage() {
   return (
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-6 flex items-center justify-between">
-        <Link href="/dashboard" className="text-sm text-gray-500 hover:underline">
-          ← 대시보드
+        <Link href="/dashboard" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
+          <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+          대시보드
         </Link>
         <Link
           href="/workouts/new"
-          className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
+          className={cn(buttonVariants({ size: 'sm' }))}
         >
-          + 기록
+          <Plus data-icon="inline-start" aria-hidden="true" />
+          기록
         </Link>
       </header>
 
       <div className="mb-4 flex items-center justify-between">
-        <button onClick={() => shiftMonth(-1)} className="px-2 py-1 text-gray-500 hover:text-gray-900">
-          ‹
+        <button
+          onClick={() => shiftMonth(-1)}
+          aria-label="이전 달"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </button>
         <h1 className="text-lg font-bold text-gray-900">
           {year}년 {month}월
         </h1>
-        <button onClick={() => shiftMonth(1)} className="px-2 py-1 text-gray-500 hover:text-gray-900">
-          ›
+        <button
+          onClick={() => shiftMonth(1)}
+          aria-label="다음 달"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+        >
+          <ChevronRight className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 

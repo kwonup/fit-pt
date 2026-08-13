@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -12,9 +13,10 @@ export default function HomePage() {
       </div>
       <Link
         href="/login"
-        className="rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition hover:bg-gray-700"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gray-900 px-6 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 active:translate-y-px"
       >
         시작하기
+        <ArrowRight data-icon="inline-end" aria-hidden="true" />
       </Link>
     </main>
   )

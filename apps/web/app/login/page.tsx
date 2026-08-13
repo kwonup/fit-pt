@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { LogIn, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
 
 type Mode = 'login' | 'signup'
 
@@ -82,26 +84,33 @@ export default function LoginPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
           {notice && <p className="text-sm text-green-700">{notice}</p>}
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-50"
+            size="lg"
+            className="mt-1 w-full"
           >
+            {mode === 'login' ? (
+              <LogIn data-icon="inline-start" aria-hidden="true" />
+            ) : (
+              <UserPlus data-icon="inline-start" aria-hidden="true" />
+            )}
             {loading ? '처리 중...' : mode === 'login' ? '로그인' : '회원가입'}
-          </button>
+          </Button>
         </form>
 
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => {
             setMode(mode === 'login' ? 'signup' : 'login')
             setError(null)
             setNotice(null)
           }}
-          className="mt-4 text-sm text-gray-500 underline-offset-2 hover:underline"
+          className="mt-3 w-full text-gray-600"
         >
           {mode === 'login' ? '계정이 없으신가요? 회원가입' : '이미 계정이 있으신가요? 로그인'}
-        </button>
+        </Button>
       </div>
     </main>
   )

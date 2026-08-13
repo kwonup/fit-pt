@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft, Trash2 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { WORKOUT_TYPE_META } from '@/lib/constants'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { WorkoutDetail } from '@/types'
 
 export default function WorkoutDetailPage() {
@@ -65,8 +68,9 @@ export default function WorkoutDetailPage() {
     return (
       <main className="mx-auto max-w-lg p-6">
         <p className="mb-4 text-sm text-red-600">{error ?? '기록이 없습니다.'}</p>
-        <Link href="/calendar" className="text-sm text-gray-500 hover:underline">
-          ← 캘린더로
+        <Link href="/calendar" className={cn(buttonVariants({ variant: 'outline' }))}>
+          <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+          캘린더로
         </Link>
       </main>
     )
@@ -77,16 +81,19 @@ export default function WorkoutDetailPage() {
   return (
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-6 flex items-center justify-between">
-        <Link href="/calendar" className="text-sm text-gray-500 hover:underline">
-          ← 캘린더
+        <Link href="/calendar" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
+          <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+          캘린더
         </Link>
-        <button
+        <Button
           onClick={handleDelete}
           disabled={deleting}
-          className="text-sm text-gray-400 hover:text-red-600 disabled:opacity-50"
+          variant="destructive"
+          size="sm"
         >
+          <Trash2 data-icon="inline-start" aria-hidden="true" />
           {deleting ? '삭제 중...' : '삭제'}
-        </button>
+        </Button>
       </header>
 
       <div className="mb-2 flex items-center gap-2">

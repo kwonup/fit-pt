@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { CalendarDays, ChevronRight, Dumbbell, LogOut, Settings2, Sparkles } from 'lucide-react'
 import { ApiError, apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/client'
 import { PERSONAS } from '@/lib/constants'
+import { Button } from '@/components/ui/button'
 import type { StatsSummary, UserProfile, WeeklyStat } from '@/types'
 
 const fmtMonthDay = (iso: string) => {
@@ -50,6 +52,7 @@ export default function DashboardPage() {
   const [weekly, setWeekly] = useState<WeeklyStat[]>([])
   const [weeks, setWeeks] = useState<4 | 8>(4)
   const [metric, setMetric] = useState<WeeklyMetric>('time')
+  const [loggingOut, setLoggingOut] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -95,6 +98,7 @@ export default function DashboardPage() {
   }, [weeks])
 
   async function handleLogout() {
+    setLoggingOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
     router.replace('/login')
@@ -117,12 +121,16 @@ export default function DashboardPage() {
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">핏피티</h1>
-        <button
+        <Button
           onClick={handleLogout}
-          className="text-sm text-gray-500 underline-offset-2 hover:underline"
+          disabled={loggingOut}
+          variant="outline"
+          size="sm"
+          className="text-gray-600"
         >
-          로그아웃
-        </button>
+          <LogOut data-icon="inline-start" aria-hidden="true" />
+          {loggingOut ? '로그아웃 중' : '로그아웃'}
+        </Button>
       </header>
 
       {profile && (
@@ -142,12 +150,15 @@ export default function DashboardPage() {
             <dt className="text-gray-500">코치</dt>
             <dd className="text-gray-900">{personaName}</dd>
           </dl>
-          <button
+          <Button
             onClick={() => router.push('/onboarding')}
-            className="mt-3 text-xs text-gray-500 underline-offset-2 hover:underline"
+            variant="outline"
+            size="sm"
+            className="mt-4"
           >
+            <Settings2 data-icon="inline-start" aria-hidden="true" />
             프로필 수정
-          </button>
+          </Button>
         </section>
       )}
 
@@ -185,7 +196,8 @@ export default function DashboardPage() {
                 <button
                   key={w}
                   onClick={() => setWeeks(w)}
-                  className={`rounded-md px-2 py-1 text-xs transition ${
+                  aria-pressed={weeks === w}
+                  className={`rounded-md px-2 py-1 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 ${
                     weeks === w
                       ? 'bg-gray-900 text-white'
                       : 'text-gray-500 hover:bg-gray-100'
@@ -202,7 +214,8 @@ export default function DashboardPage() {
               <button
                 key={key}
                 onClick={() => setMetric(key)}
-                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition ${
+                aria-pressed={metric === key}
+                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 ${
                   metric === key
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -254,9 +267,9 @@ export default function DashboardPage() {
 
       <nav className="grid gap-3">
         {[
-          { label: 'AI 코치에게 루틴 받기', href: '/chat', soon: false },
-          { label: '운동 기록하기', href: '/workouts/new', soon: false },
-          { label: '캘린더', href: '/calendar', soon: false },
+          { label: 'AI 코치에게 루틴 받기', description: '내 기록에 맞는 운동 추천', href: '/chat', icon: Sparkles, soon: false },
+          { label: '운동 기록하기', description: '오늘 운동을 직접 기록', href: '/workouts/new', icon: Dumbbell, soon: false },
+          { label: '캘린더', description: '날짜별 운동 기록 확인', href: '/calendar', icon: CalendarDays, soon: false },
         ].map((item) =>
           item.soon ? (
             <div
@@ -270,10 +283,16 @@ export default function DashboardPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center justify-between rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition hover:border-gray-900"
+              className="group flex min-h-16 items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
             >
-              <span>{item.label}</span>
-              <span className="text-gray-400">→</span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 transition group-hover:bg-gray-900 group-hover:text-white">
+                <item.icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-gray-900">{item.label}</span>
+                <span className="mt-0.5 block text-xs text-gray-500">{item.description}</span>
+              </span>
+              <ChevronRight className="h-4 w-4 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-700" aria-hidden="true" />
             </Link>
           )
         )}
