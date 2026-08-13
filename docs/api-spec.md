@@ -73,8 +73,10 @@ FastAPI는 토큰을 검증하고 `user_id`를 추출합니다 (`app/core/deps.p
 **Query Parameters**
 | 파라미터 | 타입 | 기본값 | 설명 |
 |---|---|---|---|
-| year | int | 현재 연도 | 조회 연도 |
-| month | int | 현재 월 | 조회 월 |
+| year | int | 없음 | 조회 연도. `month`와 함께 전달 |
+| month | int | 없음 | 조회 월. `year`와 함께 전달 |
+
+두 값을 모두 생략하면 사용자의 전체 운동 기록을 최신 날짜순으로 반환합니다. 하나만 전달하면 `422`를 반환합니다.
 
 **Response**
 ```json
@@ -187,7 +189,7 @@ FastAPI는 토큰을 검증하고 `user_id`를 추출합니다 (`app/core/deps.p
 ## AI 챗봇
 
 ### POST /chat
-AI 챗봇 메시지 전송 및 응답.
+AI 챗봇 메시지 전송 및 응답. Question Router가 Intent를 정하고 RoutePlan에 따라 필요한 사용자 SQL context와 공용 전문지식 RAG만 조회합니다.
 
 **Request Body**
 ```json
@@ -226,13 +228,26 @@ AI 챗봇 메시지 전송 및 응답.
 
 > `recommendation`은 운동 추천 요청인 경우에만 포함됩니다. 일반 질문 응답 시 `null`.
 > `recommendation.workout_type`은 `weight`, `running`, `other` 중 하나입니다.
+> 추천 데이터는 타입별 Pydantic 스키마를 통과한 경우에만 `ai_recommendations`에 저장됩니다.
+> `message_id`는 현재 프론트엔드 목록 key용 임시 UUID이며 `chat_messages`의 DB ID가 아닙니다. 일반 대화는 현재 저장하지 않습니다.
+> 내부 `intent`, `route_source`, `rag_status`, 검색 유사도는 공개 응답에 포함하지 않습니다.
+
+**Intent별 리소스**
+
+| Intent | 사용자 Profile | 운동 기록 SQL | 전문지식 RAG | 추천 카드 |
+| --- | --- | --- | --- | --- |
+| `CHAT` | X | X | X | X |
+| `WORKOUT_HISTORY` | X | O | X | X |
+| `FITNESS_KNOWLEDGE` | X | X | O | X |
+| `PERSONAL_COACHING` | O | O | O | X |
+| `ROUTINE_RECOMMENDATION` | O | O | O | O |
 
 ---
 
 ## 통계
 
 ### GET /stats/weekly
-주차별 총 운동 시간.
+주차별 총 운동 시간, 웨이트 볼륨, 러닝 거리. 기록이 없는 주도 `0`으로 반환합니다.
 
 **Query Parameters**
 | 파라미터 | 타입 | 기본값 | 설명 |
@@ -242,10 +257,18 @@ AI 챗봇 메시지 전송 및 응답.
 **Response**
 ```json
 [
-  { "week_start": "2026-06-22", "total_minutes": 180 },
-  { "week_start": "2026-06-15", "total_minutes": 120 },
-  { "week_start": "2026-06-08", "total_minutes": 0 },
-  { "week_start": "2026-06-01", "total_minutes": 90 }
+  {
+    "week_start": "2026-06-01",
+    "total_minutes": 90,
+    "total_volume": 8400,
+    "total_distance_km": 5.0
+  },
+  {
+    "week_start": "2026-06-08",
+    "total_minutes": 0,
+    "total_volume": 0,
+    "total_distance_km": 0
+  }
 ]
 ```
 
@@ -274,7 +297,7 @@ AI 챗봇 메시지 전송 및 응답.
 | HTTP 코드 | 상황 |
 |---|---|
 | 401 | 인증 토큰 없음 또는 유효하지 않음 |
-| 403 | 타인의 리소스 접근 시도 |
-| 404 | 리소스 없음 |
+| 404 | 리소스 없음 또는 현재 사용자 소유가 아닌 리소스 |
 | 422 | 요청 데이터 유효성 오류 |
 | 500 | 서버 내부 오류 |
+| 502 | AI Router·RAG·provider orchestration 중 처리 실패 |

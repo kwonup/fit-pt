@@ -58,7 +58,7 @@ AI 코치가 생성한 루틴은 답변으로 끝나지 않고 실제 운동 기
 
 | 항목 | 내용 |
 | --- | --- |
-| 개발 기간 | `2026.06 ~ 2026.07`|
+| 개발 기간 | `2026.06 ~ 2026.08` |
 | 팀 구성 | `개인 프로젝트` |
 | 담당 범위 | `서비스 기획, UI 설계, 프론트엔드·백엔드 개발, DB 설계, AI 기능 구현` |
 
@@ -69,11 +69,11 @@ AI 코치가 생성한 루틴은 답변으로 끝나지 않고 실제 운동 기
 | 이메일 인증과 접근 제어 | 구현 | Supabase 회원가입·로그인, SSR 세션 갱신, 보호 경로 리다이렉트 |
 | 운동 프로필과 AI 페르소나 | 구현 | 목표·숙련도·주 운동·빈도·주의 부위, 천사/호랑이 코치 설정 |
 | 운동 기록 | 부분 구현 | 웨이트·러닝·기타 생성, 월별 조회, 상세 조회, 삭제. 공통 필드 수정 API는 있으나 수정 UI는 없음 |
-| AI 코칭 | 구현 | OpenAI/Claude 선택, 프로필·운동 이력 기반 답변, 구조화 추천 카드 |
+| AI 코칭 | 구현 | 하이브리드 Question Router, SQL 사용자 context, LangChain·pgvector RAG, OpenAI/Claude 응답 |
 | 추천을 기록으로 전환 | 구현 | 추천 데이터를 일회성으로 기록 폼에 채우고 수정 후 저장 |
 | 운동 통계 | 구현 | 요약 지표와 4주/8주 운동 시간·웨이트 볼륨·러닝 거리 |
-| 채팅 이력 | 부분 구현 | DB 저장은 구현, 이전 대화 조회 API와 UI는 없음 |
-| 배포·테스트 자동화 | 미구현 | 실서비스 URL, CI/CD, 프로젝트 소유 자동화 테스트 없음 |
+| 채팅 이력 | 스키마만 구현 | `chat_messages` 테이블은 있으나 현재 `/chat`은 대화 메시지를 저장·조회하지 않음 |
+| 배포·테스트 자동화 | 부분 구현 | Python 단위·통합 테스트 구성. 실서비스 URL, 브라우저 E2E와 CI/CD는 없음 |
 
 ## 주요 기능
 
@@ -86,7 +86,9 @@ AI 코치가 생성한 루틴은 답변으로 끝나지 않고 실제 운동 기
 ### 2. 운동 이력을 활용하는 AI 코치
 
 - 사용자는 “2주 전 등 운동과 비슷하게”, “최고 기록을 참고해 가슴 루틴을 짜줘”처럼 자연어로 요청할 수 있습니다.
+- Rule fast path와 LLM 의미 분류를 결합한 Router가 일반 대화, 기록 조회, 운동 지식, 개인 코칭, 루틴 추천을 구분합니다.
 - 백엔드는 기본 프로필과 최근 30일 요약에 더해, 질문에서 기간·최고 기록·운동 부위 의도를 감지했을 때 관련 세트 기록을 추가 조회합니다.
+- 운동 횟수·중량·거리 같은 사용자 수치는 SQL로 조회하고, 논문·가이드라인 같은 비정형 전문지식은 LangChain Retriever와 Supabase pgvector로 검색합니다.
 - 사용자가 선택한 상냥한 천사 코치(`angel`) 또는 엄격한 호랑이 코치(`tiger`)의 말투를 시스템 프롬프트에 반영합니다.
 
 ### 3. 구조화 추천 카드와 기록 폼 자동 채움
@@ -115,18 +117,25 @@ sequenceDiagram
     participant Web as Next.js Web
     participant API as FastAPI
     participant DB as Supabase PostgreSQL
+    participant RAG as pgvector 지식 검색
     participant AI as OpenAI 또는 Claude
 
     User->>Web: 자연어로 운동 루틴 요청
     Web->>API: POST /chat + Supabase JWT
-    API->>DB: 프로필과 최근 30일 기록 조회
-    opt 기간·부위·최고 기록 의도 감지
-        API->>DB: 관련 세트와 최고/최근 중량 조회
+    API->>AI: 애매한 질문만 Intent 의미 분류
+    API->>API: RoutePlan으로 필요한 리소스 결정
+    opt Profile 또는 운동 이력이 필요한 Intent
+        API->>DB: 인증 사용자 프로필·운동 기록 조회
     end
-    API->>AI: 페르소나 + 선별된 운동 컨텍스트
+    opt 운동 전문지식이 필요한 Intent
+        API->>RAG: 질문 embedding으로 관련 chunk 검색
+    end
+    API->>AI: 의도별 LangChain 프롬프트 + 선택된 context
     AI-->>API: JSON 형식의 답변과 추천 데이터
-    API->>API: JSON 파싱과 최소 계약 검증
-    API->>DB: 채팅 메시지와 추천 저장
+    API->>API: JSON 파싱과 Pydantic 추천 계약 검증
+    opt 유효한 루틴 추천
+        API->>DB: ai_recommendations 저장
+    end
     API-->>Web: 텍스트 + structured_data
     Web-->>User: 운동 타입별 추천 카드 표시
     User->>Web: 이 루틴으로 기록하기
@@ -153,7 +162,9 @@ sequenceDiagram
 | Backend | **Pydantic / Pydantic Settings 2.5** | 요청 스키마의 타입·범위 검증과 환경 변수 로딩 |
 | Database / Auth | **Supabase PostgreSQL / Auth / RLS** | 이메일 인증, 관계형 운동 데이터 저장, 사용자별 접근 정책 적용 |
 | Database | **PostgreSQL Functions** | 최고·최근 중량과 주간 시간·볼륨·거리 집계를 DB에서 처리 |
-| AI | **OpenAI SDK 1.54 / Anthropic SDK 0.40** | 환경 변수로 선택 가능한 AI 코치 응답 생성 |
+| AI | **OpenAI SDK 2.54 / Anthropic SDK 0.120** | 환경 변수로 선택 가능한 Router·AI 코치 응답 생성 |
+| AI / RAG | **LangChain Core 1.5 / LangChain OpenAI 1.4** | 문서·Retriever·PromptTemplate·embedding 추상화 |
+| Vector Search | **Supabase pgvector / OpenAI `text-embedding-3-small`** | 운동 논문·가이드의 semantic search |
 | Development | **npm / pip / Git / Swagger UI** | 잠금 파일 기반 프론트 설치, Python 의존성 관리, API 확인 |
 
 > Vercel과 Render는 문서에 정의된 **배포 대상**이며, 현재 저장소에서 실제 배포 URL이나 배포 설정 파일은 확인되지 않습니다.
@@ -166,9 +177,15 @@ flowchart LR
     Web -->|회원가입/로그인| Auth[Supabase Auth]
     Web -->|Bearer JWT + REST| API[FastAPI API]
     API -->|토큰 검증| Auth
-    API -->|프로필/운동/채팅/통계| DB[(Supabase PostgreSQL)]
-    API -->|AI_PROVIDER=openai| OpenAI[OpenAI API]
-    API -->|AI_PROVIDER=claude| Claude[Anthropic API]
+    API --> Router[Question Router]
+    Router --> Plan[RoutePlan / Orchestrator]
+    Plan -->|프로필·운동·통계 SQL| DB[(Supabase PostgreSQL)]
+    Plan -->|전문지식 검색| Vector[(Supabase pgvector)]
+    Vector -->|관련 LangChain Document| Prompt[Intent별 PromptTemplate]
+    DB -->|사용자 context| Prompt
+    Plan -->|context 불필요| Prompt
+    Prompt -->|AI_PROVIDER=openai| OpenAI[OpenAI API]
+    Prompt -->|AI_PROVIDER=claude| Claude[Anthropic API]
     OpenAI -->|JSON 응답| API
     Claude -->|JSON 응답| API
     API -->|구조화된 추천 응답| Web
@@ -178,6 +195,7 @@ flowchart LR
 - FastAPI는 전달받은 토큰을 Supabase Auth로 검증한 뒤 사용자 ID를 추출합니다.
 - 백엔드는 `service_role` 키를 사용하므로 최상위 사용자 데이터는 인증된 `id` 또는 `user_id`로 필터링하고, 타입별 상세는 본인 세션의 소유권을 확인한 뒤 조회합니다. DB에는 각 업무 테이블의 RLS 정책도 정의했습니다.
 - AI 라우터는 특정 공급자 구현에 직접 의존하지 않고 공통 인터페이스와 팩토리를 통해 OpenAI 또는 Claude를 선택합니다.
+- 사용자 개인 기록은 RAG 저장소에 넣지 않으며, 공용 전문지식 테이블과 검색 RPC는 `service_role`을 사용하는 FastAPI만 접근합니다.
 
 ## 주요 구현 내용
 
@@ -186,6 +204,9 @@ flowchart LR
 - **입력 검증:** Pydantic 모델로 제목, 운동 시간, 거리, 빈도 등의 필수 여부와 범위를 검증하고 러닝 페이스를 서버에서 자동 계산합니다.
 - **실패 보상:** 운동 세션 생성 뒤 하위 데이터 저장이 실패하면 사용자 조건으로 부모 세션 삭제를 시도해 cascade 정리합니다. 완전한 DB 트랜잭션 대신 부분 저장 가능성을 줄이기 위한 보상 처리입니다.
 - **통계 집계:** `generate_series`를 이용한 SQL 함수가 빈 주를 포함한 4주/8주 데이터를 만들고 시간·볼륨·거리를 한 번의 RPC로 반환합니다.
+- **의도 기반 오케스트레이션:** Router는 Intent만 반환하고 RoutePlan이 Profile·SQL·RAG·추천 카드 사용 여부를 결정해 불필요한 조회와 토큰 사용을 줄입니다.
+- **RAG 파이프라인:** PDF·Markdown·텍스트를 LangChain으로 로드·분할·임베딩하고 Supabase pgvector의 cosine similarity 검색 결과에 제목·출처·페이지 metadata를 유지합니다.
+- **추천 계약 검증:** 프론트엔드 판별 유니온과 동일한 Pydantic 스키마로 웨이트·러닝·기타 추천의 필수 필드와 값 범위를 검증합니다.
 
 ## 기술적 문제 해결
 
@@ -204,12 +225,12 @@ OpenAI는 JSON 응답 모드를 지원하지만 Claude 연동은 프롬프트 �
 - 공통 `AIProvider` 인터페이스와 팩토리로 공급자 차이를 라우터 밖으로 분리했습니다.
 - 시스템 프롬프트에 운동 타입별 JSON 계약을 정의했습니다.
 - 파서에서 코드 펜스 제거, 첫 JSON 객체 탐색, 중첩 JSON과 문자열형 `structured_data` 복구를 순서대로 시도합니다.
-- 마지막에는 `workout_type`과 `structured_data.type`의 일치 여부를 확인하고, 최소 계약을 충족하지 못하면 추천 데이터를 버립니다.
+- 마지막에는 `workout_type` 일치 여부와 타입별 Pydantic 스키마를 검증하고, 필수 필드·값 범위·최대 8개 종목 등의 계약을 충족하지 못하면 추천 데이터를 버립니다.
 - 프론트엔드에서도 JSON 형태의 응답을 다시 파싱하고 일부 중첩 응답 복구를 시도합니다.
 
 #### 결과
 
-JSON으로 복구되고 최소 타입 계약을 통과한 응답만 추천 카드와 기록 폼으로 전달하고, 복구할 수 없는 경우에는 텍스트 안내로 축소합니다. 성능 수치는 별도로 측정하지 않았습니다.
+JSON으로 복구되고 전체 추천 계약을 통과한 응답만 추천 카드와 기록 폼으로 전달하고, 복구할 수 없는 경우에는 텍스트 안내로 축소합니다. 성능 수치는 별도로 측정하지 않았습니다.
 
 ### 2. 전체 이력을 보내지 않고 질문에 필요한 기록만 AI 컨텍스트로 구성
 
@@ -251,7 +272,7 @@ AI 출력 형식과 서비스의 웨이트·러닝·기타 기록 입력 형식 
 
 #### 결과
 
-추천 내용을 수동으로 다시 입력하지 않고 실제 운동 기록으로 전환할 수 있는 핵심 사용자 흐름을 구현했습니다. 현재 추천 ID와 저장된 기록의 연결은 남은 과제입니다.
+추천 내용을 수동으로 다시 입력하지 않고 실제 운동 기록으로 전환할 수 있는 핵심 사용자 흐름을 구현했습니다. 추천 ID도 운동 생성 요청의 `ai_recommendation_id`로 전달되어 추천과 실제 기록의 연결을 보존합니다.
 
 ## 데이터베이스
 
@@ -264,7 +285,9 @@ AI 출력 형식과 서비스의 웨이트·러닝·기타 기록 입력 형식 
 | `running_sessions` | 러닝 거리, 시간, 평균 페이스, 강도 |
 | `other_sessions` | 기타 운동의 자유 서술 내용 |
 | `ai_recommendations` | AI 답변과 구조화 추천 JSONB |
-| `chat_messages` | 사용자와 AI의 메시지 이력 |
+| `chat_messages` | 대화 이력 확장을 위한 예약 테이블. 현재 API에서는 미사용 |
+| `knowledge_documents` | 공용 운동 전문지식 원문 metadata와 중복 방지 hash |
+| `knowledge_chunks` | 검색용 본문 chunk, provenance metadata, 1536차원 embedding |
 
 ```mermaid
 erDiagram
@@ -278,9 +301,10 @@ erDiagram
     AUTH_USERS ||--o{ CHAT_MESSAGES : writes
     AI_RECOMMENDATIONS o|--o{ CHAT_MESSAGES : referenced_by
     AI_RECOMMENDATIONS o|--o{ WORKOUT_SESSIONS : source_of
+    KNOWLEDGE_DOCUMENTS ||--o{ KNOWLEDGE_CHUNKS : split_into
 ```
 
-스키마에는 외래 키와 `ON DELETE CASCADE`, 사용자·날짜 및 정렬 기준 인덱스, 8개 업무 테이블의 RLS 정책이 포함됩니다. AI 추천 이력은 `structured_data` JSONB로 저장하고, 현재 폼 전환은 `/chat` 응답의 구조 데이터를 `sessionStorage`로 전달합니다. 운동 기록은 조회와 집계가 쉬운 관계형 테이블로 분리했습니다.
+스키마에는 외래 키와 `ON DELETE CASCADE`, 사용자·날짜 및 정렬 기준 인덱스, 사용자 데이터용 RLS 정책이 포함됩니다. AI 추천 이력은 `structured_data` JSONB로 저장하고, 폼 전환은 `/chat` 응답을 `sessionStorage`로 전달한 뒤 `ai_recommendation_id`까지 운동 기록에 저장합니다. 공용 지식 테이블과 `match_knowledge_chunks` RPC는 브라우저에 공개하지 않습니다.
 
 ## 주요 API
 
@@ -298,7 +322,7 @@ erDiagram
 | `POST` | `/workouts/other` | 기타 운동 기록 생성 | 필요 |
 | `PUT` | `/workouts/{session_id}` | 날짜·제목·시간·메모 수정 | 필요 |
 | `DELETE` | `/workouts/{session_id}` | 본인 운동 기록 삭제 | 필요 |
-| `POST` | `/chat` | AI 답변과 선택적 추천 생성·저장 | 필요 |
+| `POST` | `/chat` | 의도 분류 후 선택적 SQL/RAG 답변 생성, 유효한 추천만 저장 | 필요 |
 | `GET` | `/stats/weekly?weeks=4` | 4주 또는 8주 시간·볼륨·거리 조회 | 필요 |
 | `GET` | `/stats/summary` | 이번 주 시간·전체 횟수·최근 운동일 조회 | 필요 |
 
@@ -313,13 +337,16 @@ fit-pt/
 │   │   ├── lib/                 # API, 인증, Supabase, 폼 전달 로직
 │   │   └── types/               # 운동·추천·API 타입 계약
 │   └── api/
-│       └── app/
+│       ├── app/
 │           ├── core/            # 환경 설정과 인증 의존성
 │           ├── routers/         # profile, workouts, chat, stats API
 │           ├── schemas/         # Pydantic 요청 모델
 │           └── services/
-│               ├── ai/          # 공급자, 프롬프트, 응답 파서
-│               └── context.py   # 질문별 운동 기록 컨텍스트 구성
+│               ├── ai/          # Router, Orchestrator, Prompt, 추천 검증
+│               ├── rag/         # 문서 적재와 pgvector Retriever
+│               └── context.py   # 질문별 사용자 SQL context 구성
+│       ├── scripts/              # 지식 적재·검색·질문 분류 CLI
+│       └── tests/                # AI·RAG 단위 및 통합 테스트
 ├── supabase/
 │   └── migrations/              # 스키마, RLS, 집계 함수 변경 이력
 └── docs/                         # 프로젝트 계획, API, DB 문서
@@ -441,9 +468,11 @@ npm run start
 | `AI_PROVIDER` | 사용할 공급자: `openai` 또는 `claude` | 선택, 기본 `openai` |
 | `AI_MAX_TOKENS` | AI 응답 최대 토큰 수 | 선택, 기본 `4096` |
 | `OPENAI_API_KEY` | OpenAI 채팅·RAG embedding 인증 키 | OpenAI 채팅 또는 RAG 사용 시 필수 |
-| `OPENAI_MODEL` | 사용할 OpenAI 모델명 | 선택 |
+| `OPENAI_MODEL` | 사용할 OpenAI 모델명 | 선택, 기본 `gpt-5.6-luna` |
 | `ANTHROPIC_API_KEY` | Anthropic 인증 키 | Claude 선택 시 필수 |
-| `CLAUDE_MODEL` | 사용할 Claude 모델명 | 선택 |
+| `CLAUDE_MODEL` | 사용할 Claude 모델명 | 선택, 기본 `claude-haiku-4-5-20251001` |
+| `CLAUDE_EFFORT` | Haiku 외 지원 모델의 reasoning effort | 선택, 기본 `medium` |
+| `CLAUDE_THINKING_ENABLED` | Haiku 외 지원 모델의 adaptive thinking 사용 여부 | 선택, 기본 `false` |
 | `EMBEDDING_PROVIDER` | RAG embedding 공급자. 현재 `openai` 고정 | 선택, 기본 `openai` |
 | `OPENAI_EMBEDDING_MODEL` | RAG embedding 모델. 현재 `text-embedding-3-small` 고정 | 선택 |
 | `EMBEDDING_DIMENSIONS` | DB vector와 동일해야 하는 embedding 차원. 현재 `1536` 고정 | 선택 |
@@ -461,7 +490,7 @@ npm run start
 | API 스모크 테스트 | FastAPI TestClient로 `GET /health` 응답 `200` 확인 |
 | 요청 검증 | Pydantic 스키마로 필수값과 숫자 범위 검증 |
 | Lint | `lint` 스크립트는 있으나 ESLint 설정 파일이 없어 현재 비대화형 실행 불가 |
-| 자동화 테스트 | Python `unittest` 기반 AI Router·RAG·context·추천 계약 테스트 구성 |
+| 자동화 테스트 | Python `unittest` 57개: Router·RAG·context·프롬프트·추천 계약·통합 흐름 |
 | CI/CD | GitHub Actions 등 자동화 설정 미구성 |
 
 AI 관련 회귀 테스트는 `cd apps/api` 후 `python -m unittest discover -s tests -v`로 실행합니다. 실제 Supabase embedding 검색 품질과 브라우저 동작은 운영 데이터와 외부 서비스에 의존하므로 별도 수동 검증이 필요합니다.
@@ -471,12 +500,12 @@ AI 관련 회귀 테스트는 `cd apps/api` 후 `python -m unittest discover -s 
 코드와 설정에서 확인한 후속 과제입니다.
 
 - **기록 전체 수정:** 현재 웹에서는 상세 조회와 삭제만 가능하고, `PUT /workouts/{id}`도 공통 필드만 수정합니다. 웨이트 종목·세트와 러닝 상세 수정 UI/API가 필요합니다.
-- **추천 전환 추적:** DB와 생성 스키마에는 `ai_recommendation_id`가 있지만 프론트엔드가 추천 ID를 기록 요청에 전달하지 않습니다. 이를 연결해 추천이 실제 기록으로 전환됐는지 추적할 수 있어야 합니다.
-- **채팅 이력 조회:** 메시지와 추천은 저장되지만 `GET` API와 재접속 시 대화를 복원하는 UI가 없습니다.
+- **채팅 이력 저장:** 현재는 유효한 루틴만 `ai_recommendations`에 저장하고 일반 대화는 저장하지 않습니다. `chat_messages` 저장·조회 정책과 보관 기간을 정한 뒤 대화 복원을 구현해야 합니다.
+- **RAG 품질 평가:** 현재 임계값은 수동 질문으로 조정합니다. 관련/무관 질문 평가셋과 recall·precision 지표를 자동화해야 합니다.
 - **Provider-native 구조화 출력:** 추천 카드는 현재 Pydantic/JSON Schema로 후처리 검증합니다. 공급자별 native structured output을 적용하면 생성 단계의 형식 준수를 더 강화할 수 있습니다.
 - **입력 규칙 보완:** 미래 날짜 기록 제한과 추천 폼의 임시저장·복구가 구현되어 있지 않습니다.
 - **품질 자동화:** AI 단위·통합 테스트 외에 브라우저 E2E, ESLint 설정, CI 파이프라인을 추가해야 합니다.
-- **배포와 문서 동기화:** Vercel/Render 배포 설정, 라이브 URL, 대표 이미지 또는 데모 GIF를 추가하고 오래된 프로젝트 체크리스트를 현재 구현 상태와 맞춰야 합니다.
+- **배포 자산:** Vercel/Render 배포 설정, 라이브 URL, 대표 이미지 또는 데모 GIF를 추가해야 합니다.
 
 ## 프로젝트 회고
 

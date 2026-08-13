@@ -16,10 +16,10 @@ auth.users (Supabase 기본)
   │     ├── running_sessions  (1:1, workout_type='running' 세션만)
   │     └── other_sessions    (1:1, workout_type='other' 세션만)
   ├── ai_recommendations  (1:N)
-  └── chat_messages       (1:N)
+  └── chat_messages       (1:N, 향후 대화 이력용 예약 테이블)
 
 workout_sessions.ai_recommendation_id → ai_recommendations (운동반영하기로 생성 시)
-chat_messages.recommendation_id       → ai_recommendations (추천 메시지와 연결)
+chat_messages.recommendation_id       → ai_recommendations (스키마만 존재, 현재 API 미사용)
 
 knowledge_documents (공용 운동 전문지식)
   └── knowledge_chunks (1:N, pgvector embedding)
@@ -123,7 +123,7 @@ AI 추천 이력. **structured_data가 "운동반영하기"의 입력값.**
 
 ### chat_messages
 
-채팅 대화 이력.
+채팅 대화 이력을 위한 예약 테이블. 현재 `/chat`은 일반 메시지를 이 테이블에 저장하거나 조회하지 않으며, 유효한 루틴 추천만 `ai_recommendations`에 저장합니다.
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
@@ -150,7 +150,7 @@ AI 추천 이력. **structured_data가 "운동반영하기"의 입력값.**
 | published_at | DATE | nullable | 발행일 |
 | license_info | TEXT | nullable | 라이선스·사용 권한 정보 |
 | content_hash | TEXT | UNIQUE, NOT NULL | 중복 적재 방지용 원문 해시 |
-| metadata | JSONB | 객체, DEFAULT `{}` | 저자·DOI 등 확장 메타데이터 |
+| metadata | JSONB | 객체, DEFAULT `{}` | 확장 메타데이터. 현재 적재 CLI는 `category`만 저장 |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 | updated_at | TIMESTAMPTZ | DEFAULT NOW() | 트리거로 자동 갱신 |
 
@@ -165,7 +165,7 @@ AI 추천 이력. **structured_data가 "운동반영하기"의 입력값.**
 | chunk_index | INTEGER | 0 이상, 문서 내 UNIQUE | 문서 내 순서 |
 | content | TEXT | NOT NULL, 공백 불가 | 검색·프롬프트 주입용 본문 |
 | embedding | VECTOR(1536) | NOT NULL | `text-embedding-3-small` 벡터 |
-| metadata | JSONB | 객체, DEFAULT `{}` | 페이지·섹션·시작 위치 등 |
+| metadata | JSONB | 객체, DEFAULT `{}` | 현재 PDF 페이지와 chunk 시작 위치 저장 |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 `match_knowledge_chunks` RPC는 질문 embedding과 cosine distance(`<=>`)를 비교하여 최대 20개의 관련 chunk를 반환합니다. 반환 metadata에는 문서 제목, 출처, URL, 라이선스, 페이지 등 출처 표시에 필요한 정보가 합쳐집니다.

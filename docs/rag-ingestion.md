@@ -15,6 +15,7 @@ Fit-PT의 RAG 지식 적재는 사용자 요청을 처리하는 FastAPI 런타�
 
 - PDF는 페이지별로 읽어 `page` 메타데이터를 보존합니다. 스캔 PDF는 OCR 후 사용해야 합니다.
 - Markdown과 텍스트는 UTF-8 파일을 지원합니다.
+- Markdown YAML frontmatter는 현재 별도 metadata로 파싱하지 않고 본문에 포함합니다. 검색 metadata의 제목·출처·언어·카테고리는 CLI 옵션을 기준으로 저장합니다.
 - 기본 분할 크기는 1,000자, 겹침은 200자입니다. 문단을 우선 보존하면서 경계에서 문맥이 끊기는 문제를 줄이기 위한 MVP 시작값이며 CLI 옵션으로 조정할 수 있습니다.
 - 원문 텍스트의 SHA-256 해시가 이미 존재하면 embedding API를 호출하지 않고 건너뜁니다.
 - embedding은 64개 chunk 단위로 생성·저장합니다.
@@ -65,6 +66,8 @@ python scripts/ingest_knowledge.py C:\knowledge\guideline.pdf `
 
 분할 설정을 실험할 때만 `--chunk-size`와 `--chunk-overlap`을 변경합니다. overlap은 chunk size보다 작아야 합니다.
 
+하나의 원 논문·가이드라인은 하나의 Markdown 파일로 유지하는 것을 권장합니다. ingestion이 파일을 자동으로 chunk로 나누므로 수동으로 작은 파일 여러 개를 만들 필요는 없습니다. 서로 다른 출처나 독립적으로 삭제·업데이트할 주제만 별도 파일로 분리합니다.
+
 ## 적재 확인
 
 Supabase SQL Editor에서 다음 읽기 전용 쿼리로 확인합니다.
@@ -78,6 +81,20 @@ select document_id, count(*) as chunk_count
 from knowledge_chunks
 group by document_id
 order by chunk_count desc;
+```
+
+검색 metadata와 chunk 내용을 일부 확인하려면 다음 쿼리를 사용합니다.
+
+```sql
+select
+  kd.title,
+  kc.chunk_index,
+  left(kc.content, 300) as content_preview,
+  kc.metadata
+from knowledge_chunks kc
+join knowledge_documents kd on kd.id = kc.document_id
+order by kd.created_at desc, kc.chunk_index
+limit 20;
 ```
 
 적재 후 Router, Retriever, 웹 답변까지 검증하는 방법은 [`ai-rag-operations.md`](./ai-rag-operations.md)를 참고합니다.

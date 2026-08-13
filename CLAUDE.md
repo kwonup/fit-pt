@@ -18,6 +18,8 @@ AI 코딩 도구가 이 프로젝트를 이해하고 일관성 있게 코드를 
 | Frontend | Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
 | Backend | FastAPI, Python 3.12 |
 | Database / Auth | Supabase (PostgreSQL + Supabase Auth) |
+| AI | OpenAI 또는 Claude, Pydantic structured recommendation |
+| RAG | LangChain, OpenAI Embeddings, Supabase pgvector |
 | Frontend 배포 | Vercel (Root: apps/web) |
 | Backend 배포 | Render (Root: apps/api) |
 
@@ -38,12 +40,17 @@ apps/api/
     schemas/      # Pydantic 스키마 (요청/응답 DTO)
     services/     # 비즈니스 로직
       ai/         # AI provider 추상화 (factory, openai/claude, prompts, parser)
+      rag/        # 지식 문서 적재, embedding, pgvector Retriever
       context.py  # 프로필 + 최근 기록 컨텍스트 구성
     core/         # 설정(config.py), 인증 의존성(deps.py)
 
 supabase/
   migrations/     # 순서대로 실행되는 SQL 마이그레이션
   seed.sql        # 개발용 초기 데이터
+
+docs/
+  ai-rag-operations.md  # Router·RAG 구조와 점검 절차
+  rag-ingestion.md      # 지식 문서 적재 절차
 ```
 
 ## 코드 작성 기준
@@ -76,12 +83,16 @@ supabase/
 
 - **모든 엔드포인트에 인증 의존성(`get_current_user_id`)을 적용한다.** `/health` 제외
 - **사용자 데이터 조회 시 반드시 `user_id`로 필터링한다.** 타인 데이터 접근 불가
-- **AI 추천 응답은 반드시 구조화된 JSON(`structured_data`)으로 파싱하여 저장한다.**
-  - 이것이 "운동반영하기" 기능의 입력값이다. 파싱 실패 시 운동반영하기가 동작하지 않는다
+- **루틴 추천 응답은 반드시 Pydantic 추천 스키마를 통과한 `structured_data`만 저장한다.**
+  - 검증 실패 시 텍스트 답변은 유지하되 추천 카드와 DB 저장은 생략한다.
 - **AI 엔진은 provider 추상화로 분리한다** (`app/services/ai/`). `AI_PROVIDER` 환경변수로 `openai`/`claude`를 선택하며, 라우터는 provider 구현을 직접 알지 않는다.
-- AI 추천 컨텍스트는 RAG가 아니라 **정형 운동 기록 기반 동적 SQL 컨텍스트 주입**을 우선한다.
+- 사용자 개인 데이터는 **정형 운동 기록 기반 동적 SQL context**로 조회한다.
   - 사용자 메시지에 "지난번", "2주 전", "최고기록", 특정 부위/종목 키워드가 있으면 관련 운동 세트 상세를 SQL로 조회해 프롬프트에 추가한다.
   - 운동 기록처럼 날짜/중량/반복수가 명확한 데이터는 벡터 검색보다 SQL 조회가 더 정확하고 비용이 낮다.
+- 논문·가이드라인 같은 공용 전문지식만 RAG로 검색하며 사용자 프로필·기록·메모는 `knowledge_*` 테이블에 넣지 않는다.
+- Question Router는 Intent만 결정하고 SQL/RAG를 직접 호출하지 않는다. 실제 리소스 선택은 `RoutePlan`과 `AIOrchestrator`가 담당한다.
+- Rule Router는 확실한 fast path만 처리한다. 동의어 목록을 무한히 늘리지 말고 애매한 표현은 LLM 의미 분류로 보낸다.
+- 현재 범위에서는 tool calling, LangGraph, multi-agent 구조를 도입하지 않는다.
 - Supabase 클라이언트는 `service_role_key`로 초기화한다 (RLS 우회 목적)
 - 라우터는 역할별로 분리한다: `routers/profile.py`, `routers/workouts.py`, `routers/chat.py`, `routers/stats.py`
 
@@ -114,22 +125,26 @@ supabase/
 - [x] 운동 기록 조회 / 삭제 (상세 `/workouts/[id]`)
 - [x] 월간 캘린더 (웨이트/러닝/기타 색상 구분, `/calendar`)
 
-### Phase 4 — AI 챗봇 (진행 중)
+### Phase 4 — AI 챗봇 ✅
 - [x] FastAPI `/chat` 엔드포인트
 - [x] AI provider 연동 (OpenAI/Claude, 기록 + 프로필 컨텍스트)
 - [x] 페르소나별 말투 적용 (angel / tiger)
-- [ ] 챗봇 UI + 추천 카드 (웨이트 / 러닝 / 기타)
+- [x] 챗봇 UI + 추천 카드 (웨이트 / 러닝 / 기타)
 
-### Phase 5 — 운동반영하기 (핵심 차별점)
+### Phase 5 — 운동반영하기 ✅
 - [x] AI `structured_data` JSON 파싱 및 저장 (백엔드 완료)
-- [ ] "운동반영하기" 버튼
-- [ ] `structured_data` → 기록 폼 초기값 매핑
-- [ ] 저장 후 캘린더 & 마이페이지 즉시 반영
+- [x] "운동반영하기" 버튼
+- [x] `structured_data` → 기록 폼 초기값 매핑
+- [x] `ai_recommendation_id`를 운동 기록에 연결
+- [x] 저장 후 캘린더 & 대시보드 반영
 
-### Phase 6 — 마이페이지 & 완성도
-- [ ] 주당 운동 시간 바 차트 (4주/8주) — 백엔드 `/stats/weekly` 완료
-- [ ] 요약 카드 (이번 주 시간, 총 횟수, 최근 운동일) — 백엔드 `/stats/summary` 완료
-- [ ] 반응형 모바일 최적화
+### Phase 6 — 대시보드·RAG ✅
+- [x] 주당 운동 시간·볼륨·거리 차트 (4주/8주)
+- [x] 요약 카드 (이번 주 시간, 총 횟수, 최근 운동일)
+- [x] Question Router + RoutePlan + AI Orchestrator
+- [x] LangChain 문서 적재·Retriever·PromptTemplate
+- [x] Supabase pgvector 전문지식 검색
+- [x] AI·RAG 자동화 테스트와 운영 문서
 
 ## AI 추천 structured_data 형식
 
