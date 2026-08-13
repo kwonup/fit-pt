@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import unittest
 from typing import Any
 
@@ -14,6 +15,36 @@ from app.services.context import WorkoutContext
 NON_RECOMMENDATION_RESPONSE = (
     '{"response_text":"답변입니다.","is_recommendation":false,'
     '"workout_type":null,"structured_data":null}'
+)
+
+WEIGHT_RECOMMENDATION_RESPONSE = json.dumps(
+    {
+        "response_text": "루틴입니다.",
+        "is_recommendation": True,
+        "workout_type": "weight",
+        "structured_data": {
+            "type": "weight",
+            "title": "가슴 루틴",
+            "estimated_duration_minutes": 50,
+            "muscle_group": "가슴",
+            "exercises": [
+                {
+                    "name": "벤치프레스",
+                    "sets": [
+                        {
+                            "set_number": 1,
+                            "weight_kg": 60,
+                            "reps": 10,
+                            "rest_seconds": 90,
+                        }
+                    ],
+                    "notes": "견갑을 고정하세요.",
+                }
+            ],
+            "cautions": "어깨 통증이 생기면 중단하세요.",
+        },
+    },
+    ensure_ascii=False,
 )
 
 
@@ -216,15 +247,9 @@ class AIOrchestratorTests(unittest.TestCase):
         self.assertIn("관련성이 충분한 자료를 찾지 못했습니다", provider.calls[0][1])
 
     def test_non_recommendation_route_discards_unexpected_card_data(self) -> None:
-        recommendation = (
-            '{"response_text":"루틴입니다.","is_recommendation":true,'
-            '"workout_type":"weight","structured_data":'
-            '{"type":"weight","title":"가슴 루틴"}}'
-        )
-
         result, _, _, _ = self._run_for_intent(
             Intent.FITNESS_KNOWLEDGE,
-            provider_response=recommendation,
+            provider_response=WEIGHT_RECOMMENDATION_RESPONSE,
             documents=[sample_document()],
         )
 
@@ -233,15 +258,9 @@ class AIOrchestratorTests(unittest.TestCase):
         self.assertIsNone(result.ai_result.structured_data)
 
     def test_recommendation_route_preserves_existing_card_contract(self) -> None:
-        recommendation = (
-            '{"response_text":"루틴입니다.","is_recommendation":true,'
-            '"workout_type":"weight","structured_data":'
-            '{"type":"weight","title":"가슴 루틴"}}'
-        )
-
         result, _, _, _ = self._run_for_intent(
             Intent.ROUTINE_RECOMMENDATION,
-            provider_response=recommendation,
+            provider_response=WEIGHT_RECOMMENDATION_RESPONSE,
             documents=[sample_document()],
         )
 

@@ -13,7 +13,7 @@ from supabase import Client
 from app.services.ai.base import AIProvider, AIResult
 from app.services.ai.factory import get_provider
 from app.services.ai.parser import parse_ai_response
-from app.services.ai.prompts import build_system_prompt, build_user_prompt
+from app.services.ai.prompts import build_ai_prompt
 from app.services.ai.question_router import (
     QuestionRouter,
     RouteResult,
@@ -91,12 +91,16 @@ class AIOrchestrator:
             rag_status,
         )
         persona = (workout_context.profile or {}).get("persona", "angel")
-        system_prompt = build_system_prompt(persona)
-        user_prompt = build_user_prompt(context, question)
+        prompt = build_ai_prompt(
+            persona=persona,
+            intent=route.intent,
+            context=context,
+            question=question,
+        )
         raw = await asyncio.to_thread(
             self.ai_provider.generate,
-            system_prompt,
-            user_prompt,
+            prompt.system_prompt,
+            prompt.user_prompt,
         )
         ai_result = parse_ai_response(raw)
 

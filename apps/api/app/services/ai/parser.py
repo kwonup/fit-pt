@@ -1,7 +1,10 @@
 import json
 from json import JSONDecodeError
 
+from pydantic import ValidationError
+
 from app.services.ai.base import AIResult
+from app.services.ai.recommendation_schema import validate_recommendation
 
 VALID_TYPES = {"weight", "running", "other"}
 
@@ -133,8 +136,17 @@ def parse_ai_response(raw: str) -> AIResult:
     ):
         return AIResult(response_text=response_text, workout_type=None, structured_data=None)
 
+    try:
+        validated_data = validate_recommendation(structured_data)
+    except ValidationError:
+        return AIResult(
+            response_text=response_text,
+            workout_type=None,
+            structured_data=None,
+        )
+
     return AIResult(
         response_text=response_text,
         workout_type=workout_type,
-        structured_data=structured_data,
+        structured_data=validated_data,
     )
