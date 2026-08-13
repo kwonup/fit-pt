@@ -27,11 +27,29 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
 
 export const WORKOUT_TYPE_META: Record<
   WorkoutType,
-  { label: string; dot: string; badge: string }
+  { label: string; dot: string; badge: string; calendarBorder: string; calendarText: string }
 > = {
-  weight: { label: '웨이트', dot: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
-  running: { label: '러닝', dot: 'bg-green-500', badge: 'bg-green-100 text-green-700' },
-  other: { label: '기타', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700' },
+  weight: {
+    label: '웨이트',
+    dot: 'bg-blue-500',
+    badge: 'bg-blue-100 text-blue-700',
+    calendarBorder: 'border-blue-500',
+    calendarText: 'text-blue-600',
+  },
+  running: {
+    label: '러닝',
+    dot: 'bg-green-500',
+    badge: 'bg-green-100 text-green-700',
+    calendarBorder: 'border-green-500',
+    calendarText: 'text-green-600',
+  },
+  other: {
+    label: '기타',
+    dot: 'bg-amber-500',
+    badge: 'bg-amber-100 text-amber-700',
+    calendarBorder: 'border-amber-500',
+    calendarText: 'text-amber-600',
+  },
 }
 
 export const PERSONAS: { code: Persona; name: string; description: string }[] = [

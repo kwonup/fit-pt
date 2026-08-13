@@ -6,12 +6,25 @@ import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 import { WORKOUT_TYPE_META } from '@/lib/constants'
-import type { WorkoutSession } from '@/types'
+import type { WorkoutSession, WorkoutType } from '@/types'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const dateKey = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`
+
+const TYPE_ORDER: WorkoutType[] = ['weight', 'running', 'other']
+
+const MULTI_TYPE_RING: Record<string, string> = {
+  'weight-running':
+    'bg-[conic-gradient(#3b82f6_0deg_180deg,#22c55e_180deg_360deg)]',
+  'weight-other':
+    'bg-[conic-gradient(#3b82f6_0deg_180deg,#f59e0b_180deg_360deg)]',
+  'running-other':
+    'bg-[conic-gradient(#22c55e_0deg_180deg,#f59e0b_180deg_360deg)]',
+  'weight-running-other':
+    'bg-[conic-gradient(#3b82f6_0deg_120deg,#22c55e_120deg_240deg,#f59e0b_240deg_360deg)]',
+}
 
 export default function CalendarPage() {
   const router = useRouter()
@@ -115,24 +128,48 @@ export default function CalendarPage() {
           if (day === null) return <div key={`blank-${i}`} />
           const key = dateKey(year, month, day)
           const daySessions = byDate.get(key) ?? []
-          const types = Array.from(new Set(daySessions.map((s) => s.workout_type)))
+          const types = TYPE_ORDER.filter((type) =>
+            daySessions.some((session) => session.workout_type === type)
+          )
           const isSelected = selected === key
+          const singleType = types.length === 1 ? types[0] : null
+          const singleTypeMeta = singleType ? WORKOUT_TYPE_META[singleType] : null
+          const workoutLabels = types.map((type) => WORKOUT_TYPE_META[type].label).join(', ')
           return (
             <button
               key={key}
               onClick={() => setSelected(isSelected ? null : key)}
-              className={`flex aspect-square flex-col items-center justify-center rounded-lg border text-sm transition ${
-                isSelected
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-transparent text-gray-700 hover:border-gray-300'
-              }`}
+              aria-label={`${key}${workoutLabels ? `, ${workoutLabels}` : ', 운동 기록 없음'}`}
+              aria-pressed={isSelected}
+              className="group flex aspect-square items-center justify-center rounded-lg text-sm transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-1"
             >
-              <span>{day}</span>
-              <span className="mt-1 flex h-1.5 gap-0.5">
-                {types.map((t) => (
-                  <span key={t} className={`h-1.5 w-1.5 rounded-full ${WORKOUT_TYPE_META[t].dot}`} />
-                ))}
-              </span>
+              {types.length > 1 ? (
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-full p-0.5 ${MULTI_TYPE_RING[types.join('-')]}`}
+                >
+                  <span
+                    className={`flex h-full w-full items-center justify-center rounded-full font-medium transition ${
+                      isSelected ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'
+                    }`}
+                  >
+                    {day}
+                  </span>
+                </span>
+              ) : (
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-full font-medium transition ${
+                    singleTypeMeta
+                      ? isSelected
+                        ? `${singleTypeMeta.dot} border-2 border-transparent text-white`
+                        : `border-2 ${singleTypeMeta.calendarBorder} ${singleTypeMeta.calendarText}`
+                      : isSelected
+                        ? 'bg-gray-900 text-white'
+                        : 'text-gray-700 group-hover:bg-gray-100'
+                  }`}
+                >
+                  {day}
+                </span>
+              )}
             </button>
           )
         })}
