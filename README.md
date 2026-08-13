@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./apps/web/public/fitpt-logo-pure.png" width="160" alt="Fit-PT 로고" />
+  <img src="./apps/web/public/fitpt-logo.png" width="160" alt="Fit-PT 로고" />
 </p>
 
 <h1 align="center">Fit-PT (핏피티)</h1>
@@ -31,6 +31,20 @@ AI가 추천한 루틴은 답변으로 끝나지 않습니다. 구조화된 추�
 | 운동 기록 관리 | 웨이트 세트·중량·횟수, 러닝 거리·시간·페이스, 기타 운동을 기록합니다. |
 | 캘린더와 통계 | 월별 기록과 주간 운동 시간·웨이트 볼륨·러닝 거리의 변화를 확인합니다. |
 
+## 현재 구현 범위
+
+| 영역 | 구현 내용 | 상태 |
+| --- | --- | --- |
+| 인증 | Supabase 이메일 회원가입·로그인, SSR 세션 갱신, 보호 경로 접근 제어 | 구현 |
+| 운동 프로필 | 목표·숙련도·주 운동·주당 빈도·주의 부위와 AI 코치 성격 설정 | 구현 |
+| 운동 기록 | 웨이트·러닝·기타 기록 생성, 월별/상세 조회, 삭제 | 구현 |
+| 운동 통계 | 이번 주 요약과 4주·8주 운동 시간·웨이트 볼륨·러닝 거리 | 구현 |
+| AI 코칭 | 질문 의도 분류, 사용자 SQL 컨텍스트, OpenAI/Claude 응답 | 구현 |
+| LangChain RAG | 문서 적재·분할·임베딩, pgvector 유사도 검색, 출처 포함 답변 | 구현 |
+| 추천 기록 전환 | 구조화 추천 카드와 운동 기록 폼 자동 채움 | 구현 |
+| 기록 전체 수정 | 공통 정보 수정 API는 있으나 종목·세트 상세 수정 UI는 미구현 | 부분 구현 |
+| 채팅 이력 | 테이블은 준비되어 있으나 대화 저장·복원 API는 미구현 | 후속 과제 |
+
 ## 화면 미리보기
 
 <table>
@@ -59,29 +73,36 @@ AI가 추천한 루틴은 답변으로 끝나지 않습니다. 구조화된 추�
   </tr>
 </table>
 
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="./apps/web/public/fitpt-log-routine.png" width="320" alt="Fit-PT 이 루틴으로 기록하기 버튼 화면" /><br />
+      <sub><strong>추천에서 기록으로</strong> — 추천 카드 하단의 <strong>“이 루틴으로 기록하기”</strong> 버튼을 누르면 AI가 만든 루틴을 운동 기록 화면으로 전달합니다.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="./apps/web/public/fitpt-add-routine-sample.png" width="320" alt="Fit-PT 운동 기록 입력 화면" /><br />
+      <sub><strong>운동 기록 자동 입력</strong> — 전달받은 종목·세트·중량·횟수를 폼에 자동으로 채우고, 실제 수행 내용에 맞게 수정한 뒤 저장합니다.</sub>
+    </td>
+  </tr>
+</table>
+
+## 시스템 아키텍처
+
 <p align="center">
-  <img src="./apps/web/public/fitpt-add-routine-sample.png" width="320" alt="Fit-PT 운동 기록 입력 화면" /><br />
-  <sub><strong>추천 루틴 기록</strong> — AI 추천값을 기록 폼에 자동으로 채우고, 실제 수행 내용에 맞게 수정해 나의 운동 기록으로 저장합니다.</sub>
+  <img src="./apps/web/public/fitpt-flow-drawio.png" width="100%" alt="Fit-PT 전체 시스템 아키텍처 흐름도" />
 </p>
 
-## AI와 RAG 동작 구조
+<p align="center">
+  <sub><strong>전체 시스템 흐름</strong> — Next.js 프론트엔드, FastAPI의 AI 코칭 오케스트레이션, Supabase 인증·관계형 데이터·pgvector, 외부 AI 모델, 운영자용 RAG 문서 적재 경로의 연결을 나타냅니다. <a href="./docs/fitpt-system-architecture.drawio">draw.io 원본</a></sub>
+</p>
 
-```mermaid
-flowchart LR
-    User[사용자 질문] --> Web[Next.js]
-    Web --> API[FastAPI]
-    API --> Router[Question Router]
-    Router --> Plan[RoutePlan]
-    Plan -->|프로필·운동 이력| DB[(Supabase PostgreSQL)]
-    Plan -->|운동 전문 지식| Vector[(Supabase pgvector)]
-    DB --> Prompt[LangChain Prompt]
-    Vector --> Prompt
-    Plan -->|컨텍스트 불필요| Prompt
-    Prompt --> LLM[OpenAI 또는 Claude]
-    LLM --> Validate[Pydantic 응답 검증]
-    Validate --> Web
-    Web -->|추천 확인·수정 후 저장| API
-```
+- **Next.js 프론트엔드:** Supabase SSR Auth로 로그인 상태를 유지하고, Bearer JWT를 포함해 FastAPI를 호출합니다.
+- **FastAPI 백엔드:** 인증된 사용자 ID를 기준으로 API 요청을 처리하고 Question Router와 `RoutePlan`으로 AI 응답에 필요한 리소스를 결정합니다.
+- **Supabase:** 사용자·운동 기록은 PostgreSQL에, 공용 운동 전문지식 embedding은 pgvector에 분리해 저장합니다. Auth와 RLS로 사용자 데이터 접근 경계를 구성합니다.
+- **AI 서비스:** 채팅 응답은 OpenAI 또는 Claude를 선택할 수 있고, RAG 문서 embedding은 OpenAI `text-embedding-3-small`을 사용합니다.
+- **RAG 적재 CLI:** PDF·Markdown·TXT를 서비스 요청과 분리된 운영자 명령으로 로드하고, LangChain Splitter로 나눈 뒤 embedding과 출처 metadata를 함께 저장합니다.
+
+### 질문 처리 흐름
 
 현재는 모델이 임의로 도구를 선택하는 Tool Calling 방식 대신, 서버가 실행 경로를 통제하는 구조를 사용합니다.
 
@@ -93,6 +114,46 @@ flowchart LR
 
 개인 운동 기록은 공용 RAG 저장소에 넣지 않으며, 인증된 사용자의 SQL 컨텍스트로만 사용합니다.
 
+### Intent별 컨텍스트 선택
+
+| 질문 유형 | 프로필 | 운동 이력 SQL | 전문지식 RAG | 추천 카드 |
+| --- | :---: | :---: | :---: | :---: |
+| 일반 대화 |  |  |  |  |
+| 운동 기록 조회 |  | ✓ |  |  |
+| 운동 지식 질문 |  |  | ✓ |  |
+| 개인화 코칭 | ✓ | ✓ | ✓ |  |
+| 루틴 추천 | ✓ | ✓ | ✓ | ✓ |
+
+이 방식은 모든 질문에 전체 기록과 문서를 넣지 않기 때문에 불필요한 DB 조회와 토큰 사용을 줄이고, 어떤 데이터가 프롬프트에 포함되는지 서버 코드에서 추적할 수 있습니다.
+
+## 핵심 구현 내용
+
+### 하이브리드 Question Router
+
+명확한 표현은 규칙 기반 fast path로 빠르게 분류하고, “근성장”, “호르몬 반응”처럼 규칙에 없는 동의어나 문맥형 질문은 LLM 의미 분류 fallback으로 처리합니다. Router는 답변을 생성하지 않고 Intent만 반환하며, 실제 리소스 선택은 `RoutePlan`이 담당합니다.
+
+### SQL 컨텍스트와 RAG의 역할 분리
+
+운동 횟수·중량·거리·최근 기록처럼 정확한 값이 필요한 정보는 SQL로 조회합니다. 반면 논문·가이드·운동 원리처럼 비정형 자료는 embedding 기반 RAG 검색으로 찾습니다. 이를 통해 개인 기록의 수치 정확성과 전문지식의 의미 검색을 각각 알맞은 방식으로 처리합니다.
+
+### 출처를 보존하는 RAG 파이프라인
+
+문서를 chunk로 분할할 때 제목, 출처, 문서 유형, 언어, 카테고리, 페이지 정보를 metadata로 함께 저장합니다. 질문 embedding과 cosine similarity가 임계값 이상인 문단만 프롬프트에 전달하며, 답변에도 검색된 자료 번호를 표시할 수 있게 provenance를 유지합니다.
+
+### 구조화 추천 계약
+
+AI 루틴은 텍스트와 `structured_data`를 함께 반환합니다. 백엔드가 코드 펜스와 중첩 JSON을 복구한 뒤 운동 타입별 Pydantic 스키마로 필수 필드와 값 범위를 검증하므로, 계약을 통과한 추천만 카드와 기록 폼에 전달됩니다.
+
+## 기술적 문제 해결
+
+| 문제 | 해결 | 결과 |
+| --- | --- | --- |
+| 규칙 Router가 동의어·문맥형 운동 질문을 놓침 | 규칙 fast path 뒤에 LLM 의미 분류 fallback 추가 | 키워드를 계속 나열하지 않아도 RAG가 필요한 질문을 의미 기반으로 분류 |
+| 검색 결과가 없거나 관련 없는 chunk가 섞임 | 같은 embedding 모델·1536차원 유지, cosine 임계값과 `top_k` 설정, 검색 CLI로 단계별 점검 | 적재·검색·라우팅·웹 응답 중 실패 지점을 분리해 확인 가능 |
+| LLM별 JSON 응답 형식이 일정하지 않음 | 공통 Provider 인터페이스, JSON 복구 파서, Pydantic 추천 스키마 적용 | 검증된 데이터만 추천 카드로 렌더링하고 실패 시 안전하게 텍스트로 축소 |
+| AI 추천을 사용자가 다시 입력해야 함 | 구조화 추천을 `sessionStorage`로 일회성 전달하고 폼 초기값으로 변환 | “이 루틴으로 기록하기” 버튼 한 번으로 추천과 실제 기록 흐름을 연결 |
+| 전체 운동 이력을 프롬프트에 넣으면 컨텍스트가 커짐 | 기간·최고 기록·운동 부위 의도에 맞는 SQL 데이터만 선택 조회 | 질문과 관련된 사용자 기록만 AI 컨텍스트에 포함 |
+
 ## 기술 스택
 
 | 영역 | 기술 |
@@ -103,6 +164,47 @@ flowchart LR
 | AI | OpenAI 또는 Claude, LangChain |
 | RAG | OpenAI Embeddings, Supabase pgvector |
 | Test | Python unittest, TypeScript compiler |
+
+## 프로젝트 구조
+
+```text
+fit-pt/
+├── apps/
+│   ├── web/
+│   │   ├── app/                   # App Router 화면과 경로
+│   │   ├── components/            # 추천 카드와 공통 UI
+│   │   ├── lib/                   # API·인증·Supabase·폼 전달 로직
+│   │   └── types/                 # 운동·추천·API 타입 계약
+│   └── api/
+│       ├── app/
+│       │   ├── core/              # 환경 설정과 인증 의존성
+│       │   ├── routers/           # Profile·Workout·Chat·Stats API
+│       │   ├── schemas/           # Pydantic 요청 모델
+│       │   └── services/
+│       │       ├── ai/            # Router·Orchestrator·Prompt·응답 검증
+│       │       ├── rag/           # 문서 적재와 pgvector Retriever
+│       │       └── context.py     # 질문별 사용자 SQL 컨텍스트
+│       ├── scripts/               # 지식 적재·검색·질문 분류 CLI
+│       └── tests/                 # AI·RAG 단위 및 통합 테스트
+├── docs/                           # API·DB·AI/RAG 운영 문서
+└── supabase/migrations/            # 스키마·RLS·RPC 변경 이력
+```
+
+## 주요 API
+
+`/health`를 제외한 제품 API는 Supabase 액세스 토큰을 `Authorization: Bearer <token>` 헤더로 전달합니다.
+
+| Method | Endpoint | 역할 |
+| --- | --- | --- |
+| `GET` / `PUT` | `/profile` | 현재 사용자의 운동 프로필 조회·저장 |
+| `GET` | `/workouts` | 전체 또는 연·월별 운동 기록 조회 |
+| `GET` / `PUT` / `DELETE` | `/workouts/{session_id}` | 운동 상세 조회·공통 정보 수정·삭제 |
+| `POST` | `/workouts/weight` | 웨이트 종목과 세트 기록 생성 |
+| `POST` | `/workouts/running` | 러닝 기록 생성과 평균 페이스 계산 |
+| `POST` | `/workouts/other` | 기타 운동 기록 생성 |
+| `POST` | `/chat` | 질문 분류 후 선택적 SQL/RAG 코칭 응답 생성 |
+| `GET` | `/stats/summary` | 이번 주 시간·전체 횟수·최근 운동일 조회 |
+| `GET` | `/stats/weekly?weeks=4` | 4주 또는 8주 운동 추세 조회 |
 
 ## 빠른 시작
 

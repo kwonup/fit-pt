@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Codex" version="26.0.9" type="device">
+  <diagram id="fitpt-system-architecture" name="FitPT 시스템 아키텍처">
+    <mxGraphModel dx="1800" dy="1180" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1180" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="&lt;b style=&quot;font-size:22px&quot;&gt;FitPT 시스템 아키텍처&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;color:#64748b&quot;&gt;현재 저장소 구현 기준 · 사용자 운동 기록 + AI 코칭 + 전문지식 RAG&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=18;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="920" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="statusNote" value="&lt;b&gt;배포 표기&lt;/b&gt;: Vercel / Render는 목표 구성&lt;br&gt;Supabase는 Auth·PostgreSQL·pgvector를 제공" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#cbd5e1;fillColor=#f8fafc;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontColor=#475569;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="14" width="410" height="48" as="geometry" />
+        </mxCell>
+
+        <mxCell id="user" value="&lt;b&gt;사용자&lt;/b&gt;&lt;br&gt;웹 브라우저" style="shape=mxgraph.basic.person;html=1;whiteSpace=wrap;strokeColor=#2563eb;fillColor=#dbeafe;fontColor=#1e3a8a;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="35" y="135" width="100" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="frontendBoundary" value="&lt;b&gt;프런트엔드 · Next.js 15 / React 19&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:11px&quot;&gt;App Router · TypeScript · Tailwind · shadcn/ui · Vercel 목표&lt;/span&gt;" style="swimlane;html=1;rounded=1;startSize=58;horizontal=1;strokeColor=#7c3aed;fillColor=#f5f3ff;swimlaneFillColor=#ffffff;fontColor=#4c1d95;fontSize=14;align=left;spacingLeft=12;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="170" y="80" width="340" height="550" as="geometry" />
+        </mxCell>
+        <mxCell id="webUi" value="&lt;b&gt;화면 / 사용자 흐름&lt;/b&gt;&lt;br&gt;/login · /onboarding · /dashboard&lt;br&gt;/calendar · /chat · /workouts" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#8b5cf6;fillColor=#ede9fe;fontColor=#4c1d95;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="195" y="165" width="290" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="authClient" value="&lt;b&gt;Supabase SSR Auth&lt;/b&gt;&lt;br&gt;브라우저/서버 클라이언트 · 쿠키&lt;br&gt;미들웨어 세션 갱신" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#8b5cf6;fillColor=#f3e8ff;fontColor=#581c87;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="195" y="295" width="290" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="restClient" value="&lt;b&gt;REST API Client&lt;/b&gt;&lt;br&gt;Authorization: Bearer {JWT}&lt;br&gt;Profile · Workouts · Stats · Chat" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#8b5cf6;fillColor=#faf5ff;fontColor=#581c87;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="195" y="405" width="290" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="prefill" value="&lt;b&gt;추천 → 기록 변환&lt;/b&gt;&lt;br&gt;추천 카드 · sessionStorage prefill · 운동 폼 확인/수정" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#c084fc;fillColor=#faf5ff;fontColor=#6b21a8;fontSize=11;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="195" y="520" width="290" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="backendBoundary" value="&lt;b&gt;백엔드 · FastAPI 0.115 / Python 3.12&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:11px&quot;&gt;Pydantic · Supabase service_role · Render 목표&lt;/span&gt;" style="swimlane;html=1;rounded=1;startSize=58;horizontal=1;strokeColor=#059669;fillColor=#ecfdf5;swimlaneFillColor=#ffffff;fontColor=#064e3b;fontSize=14;align=left;spacingLeft=12;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="550" y="80" width="680" height="755" as="geometry" />
+        </mxCell>
+        <mxCell id="authDeps" value="&lt;b&gt;인증 의존성&lt;/b&gt;&lt;br&gt;HTTPBearer · get_user(JWT)&lt;br&gt;current_user_id" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#10b981;fillColor=#d1fae5;fontColor=#064e3b;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="580" y="160" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="apiRouters" value="&lt;b&gt;API Routers&lt;/b&gt;&lt;br&gt;/profile · /workouts · /stats · /chat&lt;br&gt;사용자별 필터 · 요청/응답 계약" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#10b981;fillColor=#d1fae5;fontColor=#064e3b;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="800" y="160" width="390" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="aiBoundary" value="&lt;b&gt;AI 코칭 오케스트레이션&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:10px&quot;&gt;/chat 요청마다 필요한 SQL/RAG 리소스만 선택&lt;/span&gt;" style="swimlane;html=1;rounded=1;startSize=48;horizontal=1;strokeColor=#0d9488;fillColor=#f0fdfa;swimlaneFillColor=#ffffff;fontColor=#134e4a;fontSize=13;align=left;spacingLeft=10;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="580" y="285" width="620" height="510" as="geometry" />
+        </mxCell>
+        <mxCell id="questionRouter" value="&lt;b&gt;Question Router&lt;/b&gt;&lt;br&gt;규칙 fast path&lt;br&gt;모호하면 LLM 분류" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#14b8a6;fillColor=#ccfbf1;fontColor=#134e4a;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="365" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="routePlan" value="&lt;b&gt;RoutePlan&lt;/b&gt;&lt;br&gt;CHAT · HISTORY · KNOWLEDGE&lt;br&gt;COACHING · ROUTINE" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#14b8a6;fillColor=#ccfbf1;fontColor=#134e4a;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="800" y="365" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sqlContext" value="&lt;b&gt;SQL Context Provider&lt;/b&gt;&lt;br&gt;프로필 · 최근 30일 · 종목 상세&lt;br&gt;최고중량/운동 이력" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#14b8a6;fillColor=#f0fdfa;fontColor=#134e4a;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="500" width="180" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="ragRetriever" value="&lt;b&gt;RAG Retriever&lt;/b&gt;&lt;br&gt;질문 임베딩 · top-k 4&lt;br&gt;cosine threshold 0.70" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#14b8a6;fillColor=#f0fdfa;fontColor=#134e4a;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="500" width="170" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="promptBuilder" value="&lt;b&gt;LangChain Prompt&lt;/b&gt;&lt;br&gt;의도별 템플릿&lt;br&gt;프로필 + SQL + RAG 근거" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#14b8a6;fillColor=#f0fdfa;fontColor=#134e4a;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="500" width="150" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="providerAdapter" value="&lt;b&gt;AI Provider Adapter&lt;/b&gt;&lt;br&gt;OpenAI 또는 Claude&lt;br&gt;환경변수로 선택" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0d9488;fillColor=#ccfbf1;fontColor=#134e4a;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="650" width="185" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="responseParser" value="&lt;b&gt;Pydantic 응답 검증&lt;/b&gt;&lt;br&gt;텍스트 + structured_data&lt;br&gt;루틴 카드 계약 검증" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0d9488;fillColor=#ccfbf1;fontColor=#134e4a;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="985" y="650" width="185" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dataBoundary" value="&lt;b&gt;Supabase&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:11px&quot;&gt;Auth · PostgreSQL · pgvector · RPC&lt;/span&gt;" style="swimlane;html=1;rounded=1;startSize=58;horizontal=1;strokeColor=#d97706;fillColor=#fffbeb;swimlaneFillColor=#ffffff;fontColor=#78350f;fontSize=14;align=left;spacingLeft=12;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="80" width="460" height="655" as="geometry" />
+        </mxCell>
+        <mxCell id="supabaseAuth" value="&lt;b&gt;Supabase Auth&lt;/b&gt;&lt;br&gt;email/password · 세션 · JWT" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#f59e0b;fillColor=#fef3c7;fontColor=#78350f;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="165" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="relationalDb" value="&lt;b&gt;PostgreSQL · 개인 데이터&lt;/b&gt;&lt;br&gt;user_profiles&lt;br&gt;workout_sessions / 상세·세트&lt;br&gt;ai_recommendations&lt;br&gt;chat_messages(스키마)&lt;br&gt;&lt;span style=&quot;font-size:10px&quot;&gt;RLS + 백엔드 user_id 필터&lt;/span&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;strokeColor=#f59e0b;fillColor=#fef3c7;fontColor=#78350f;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="310" width="205" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="rpc" value="&lt;b&gt;PostgreSQL RPC&lt;/b&gt;&lt;br&gt;주간 통계&lt;br&gt;종목별 최고중량" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#f59e0b;fillColor=#fffbeb;fontColor=#78350f;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1540" y="310" width="170" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="vectorDb" value="&lt;b&gt;pgvector · 공용 전문지식&lt;/b&gt;&lt;br&gt;knowledge_documents&lt;br&gt;knowledge_chunks + vector(1536)&lt;br&gt;match_knowledge_chunks RPC" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;strokeColor=#f59e0b;fillColor=#fef3c7;fontColor=#78350f;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1530" y="465" width="185" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="securityNote" value="&lt;b&gt;보안 경계&lt;/b&gt;&lt;br&gt;브라우저: anon key / JWT&lt;br&gt;백엔드만: service_role·AI 키" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#ef4444;fillColor=#fff1f2;fontColor=#991b1b;fontSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="540" width="195" height="82" as="geometry" />
+        </mxCell>
+
+        <mxCell id="externalBoundary" value="&lt;b&gt;외부 AI 서비스&lt;/b&gt;" style="swimlane;html=1;rounded=1;startSize=45;horizontal=1;strokeColor=#e11d48;fillColor=#fff1f2;swimlaneFillColor=#ffffff;fontColor=#881337;fontSize=13;align=left;spacingLeft=10;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="775" width="460" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="chatModels" value="&lt;b&gt;Chat Model&lt;/b&gt;&lt;br&gt;OpenAI Chat Completions&lt;br&gt;또는 Anthropic Claude" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#fb7185;fillColor=#ffe4e6;fontColor=#881337;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="850" width="190" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="embeddingApi" value="&lt;b&gt;OpenAI Embeddings&lt;/b&gt;&lt;br&gt;text-embedding-3-small&lt;br&gt;1536 dimensions" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#fb7185;fillColor=#ffe4e6;fontColor=#881337;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1530" y="850" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ingestBoundary" value="&lt;b&gt;운영 경로 · RAG 지식 적재 CLI&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:10px&quot;&gt;사용자 요청 처리와 분리된 배치 작업&lt;/span&gt;" style="swimlane;html=1;rounded=1;startSize=48;horizontal=1;strokeColor=#64748b;fillColor=#f8fafc;swimlaneFillColor=#ffffff;fontColor=#334155;fontSize=13;align=left;spacingLeft=10;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="170" y="875" width="1010" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="knowledgeFiles" value="&lt;b&gt;전문지식 파일&lt;/b&gt;&lt;br&gt;PDF · Markdown · TXT" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;strokeColor=#64748b;fillColor=#f1f5f9;fontColor=#334155;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="210" y="955" width="155" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ingestCli" value="&lt;b&gt;ingest_knowledge.py&lt;/b&gt;&lt;br&gt;로더 · 출처 metadata · SHA-256 중복 방지" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#64748b;fillColor=#f1f5f9;fontColor=#334155;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="405" y="945" width="210" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="splitter" value="&lt;b&gt;LangChain Splitter&lt;/b&gt;&lt;br&gt;chunk 1000 · overlap 200&lt;br&gt;batch 64" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#64748b;fillColor=#f1f5f9;fontColor=#334155;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="655" y="945" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="batchEmbedding" value="&lt;b&gt;문서 임베딩&lt;/b&gt;&lt;br&gt;OpenAI Embeddings" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#64748b;fillColor=#f1f5f9;fontColor=#334155;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="875" y="945" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="knowledgeStore" value="&lt;b&gt;지식 저장&lt;/b&gt;&lt;br&gt;documents + chunks + vector" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#64748b;fillColor=#f1f5f9;fontColor=#334155;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1055" y="945" width="105" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="&lt;b&gt;범례&lt;/b&gt;　━━ 동기 요청/데이터　┄┄ 선택·조건부/배치　&lt;span style=&quot;color:#dc2626&quot;&gt;빨간 점선 = 보안 경계 메모&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#475569;" vertex="1" parent="1">
+          <mxGeometry x="1230" y="1040" width="510" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="eUserWeb" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563eb;strokeWidth=2;endArrow=block;endFill=1;fontSize=10;fontColor=#1e3a8a;" edge="1" parent="1" source="user" target="webUi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eUiAuth" value="로그인 / 세션" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7c3aed;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="webUi" target="authClient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eUiRest" value="화면 데이터" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7c3aed;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="webUi" target="restClient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eAuthService" value="anon key · 쿠키 · JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7c3aed;strokeWidth=2;startArrow=block;startFill=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="authClient" target="supabaseAuth">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="520" y="335" /><mxPoint x="1260" y="335" /><mxPoint x="1260" y="210" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eRestApi" value="REST JSON + Bearer JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7c3aed;strokeWidth=2;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="restClient" target="apiRouters">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="530" y="450" /><mxPoint x="530" y="205" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eApiAuth" value="모든 보호 API" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#059669;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="apiRouters" target="authDeps">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eVerifyJwt" value="토큰 검증" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d97706;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="authDeps" target="supabaseAuth">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="625" y="140" /><mxPoint x="1405" y="140" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eApiDb" value="CRUD · service_role + user_id 필터" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d97706;strokeWidth=2;startArrow=block;startFill=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="apiRouters" target="relationalDb">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="205" /><mxPoint x="1245" y="205" /><mxPoint x="1245" y="405" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eApiRpc" value="통계 / 최고기록 RPC" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d97706;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="apiRouters" target="rpc">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1215" y="225" /><mxPoint x="1260" y="225" /><mxPoint x="1260" y="357" /><mxPoint x="1520" y="357" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eChatAi" value="/chat" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#059669;strokeWidth=2;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="apiRouters" target="questionRouter">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="780" y="265" /><mxPoint x="690" y="265" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eRouterPlan" value="intent" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="questionRouter" target="routePlan">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eRouterLlm" value="모호한 질문 분류" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#e11d48;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="questionRouter" target="providerAdapter">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="690" y="475" /><mxPoint x="735" y="475" /><mxPoint x="735" y="695" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="ePlanSql" value="선택: profile/history" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="routePlan" target="sqlContext">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="475" /><mxPoint x="700" y="475" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="ePlanRag" value="선택: knowledge" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="routePlan" target="ragRetriever">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ePlanPrompt" value="의도 / 추천 여부" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="routePlan" target="promptBuilder">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="410" /><mxPoint x="1095" y="410" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eSqlDb" value="사용자 SQL 조회" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d97706;startArrow=block;startFill=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="sqlContext" target="relationalDb">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="700" y="620" /><mxPoint x="1240" y="620" /><mxPoint x="1240" y="405" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eSqlPrompt" value="개인 컨텍스트" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="sqlContext" target="promptBuilder">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="700" y="620" /><mxPoint x="1095" y="620" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eRagEmbed" value="질문 vector" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#e11d48;dashed=1;startArrow=block;startFill=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="ragRetriever" target="embeddingApi">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="905" y="770" /><mxPoint x="1620" y="770" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eRagVector" value="cosine 검색 RPC" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d97706;startArrow=block;startFill=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="ragRetriever" target="vectorDb">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1010" y="548" /><mxPoint x="1510" y="548" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eRagPrompt" value="근거 + 출처" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="ragRetriever" target="promptBuilder">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ePromptProvider" value="system/user prompt" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="promptBuilder" target="providerAdapter">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1095" y="625" /><mxPoint x="852" y="625" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eProviderModel" value="생성 요청 / JSON 응답" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#e11d48;strokeWidth=2;startArrow=block;startFill=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="providerAdapter" target="chatModels">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="852" y="820" /><mxPoint x="1405" y="820" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eProviderParser" value="raw response" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0d9488;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="providerAdapter" target="responseParser">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eParserApi" value="텍스트 + 추천 카드" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#059669;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="responseParser" target="apiRouters">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1190" y="695" /><mxPoint x="1215" y="695" /><mxPoint x="1215" y="270" /><mxPoint x="995" y="270" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eRecSave" value="검증된 추천만 저장" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d97706;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="responseParser" target="relationalDb">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1200" y="715" /><mxPoint x="1255" y="715" /><mxPoint x="1255" y="450" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eRestPrefill" value="추천 응답" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7c3aed;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="restClient" target="prefill">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ePrefillUi" value="확인·수정" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7c3aed;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="prefill" target="webUi">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="180" y="555" /><mxPoint x="180" y="217" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eFilesCli" value="load" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="knowledgeFiles" target="ingestCli"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eCliSplit" value="Document" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="ingestCli" target="splitter"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eSplitBatch" value="chunks" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="splitter" target="batchEmbedding"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eBatchApi" value="batch vectors" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#e11d48;dashed=1;startArrow=block;startFill=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="batchEmbedding" target="embeddingApi"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="950" y="1110" /><mxPoint x="1760" y="1110" /><mxPoint x="1760" y="900" /></Array></mxGeometry></mxCell>
+        <mxCell id="eBatchStore" value="metadata + vector" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="batchEmbedding" target="knowledgeStore"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eStoreVector" value="service_role insert" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d97706;dashed=1;endArrow=block;endFill=1;fontSize=9;" edge="1" parent="1" source="knowledgeStore" target="vectorDb"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1170" y="990" /><mxPoint x="1765" y="990" /><mxPoint x="1765" y="542" /></Array></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
