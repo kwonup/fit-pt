@@ -104,6 +104,25 @@ AI가 추천한 루틴은 답변으로 끝나지 않습니다. 구조화된 추�
 
 ### 질문 처리 흐름
 
+```mermaid
+flowchart LR
+    User[사용자 질문] --> Web[Next.js]
+    Web --> API[FastAPI]
+    API --> Router[Question Router]
+    Router --> Plan[RoutePlan]
+    Plan -->|프로필·운동 이력| DB[(Supabase PostgreSQL)]
+    Plan -->|운동 전문 지식| Vector[(Supabase pgvector)]
+    DB --> Prompt[LangChain Prompt]
+    Vector --> Prompt
+    Plan -->|컨텍스트 불필요| Prompt
+    Prompt --> LLM[OpenAI 또는 Claude]
+    LLM --> Validate[Pydantic 응답 검증]
+    Validate --> Web
+    Web -->|추천 확인·수정 후 저장| API
+```
+
+위 흐름도는 전체 시스템 구성 중 사용자의 질문이 AI 답변으로 변환되는 경로만 단순화한 것입니다. 운동 지식 질문에는 pgvector 검색 결과가, 개인화 질문에는 프로필·운동 이력이 LangChain 프롬프트로 합쳐집니다.
+
 현재는 모델이 임의로 도구를 선택하는 Tool Calling 방식 대신, 서버가 실행 경로를 통제하는 구조를 사용합니다.
 
 1. 규칙 기반 fast path와 LLM 의미 분류 fallback을 결합한 Router가 질문 의도를 분류합니다.
