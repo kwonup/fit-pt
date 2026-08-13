@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # 전문지식 RAG embedding 규격. DB vector(1536)과 함께 변경해야 한다.
     EMBEDDING_PROVIDER: Literal["openai"] = "openai"
     OPENAI_EMBEDDING_MODEL: Literal["text-embedding-3-small"] = "text-embedding-3-small"
-    EMBEDDING_DIMENSIONS: Literal[1536] = 1536
+    EMBEDDING_DIMENSIONS: int = Field(default=1536, ge=1536, le=1536)
     RAG_TOP_K: int = Field(default=4, ge=1, le=20)
     RAG_MATCH_THRESHOLD: float = Field(default=0.70, ge=0.0, le=1.0)
 
