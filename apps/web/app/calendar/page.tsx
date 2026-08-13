@@ -14,6 +14,12 @@ const pad = (n: number) => String(n).padStart(2, '0')
 const dateKey = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`
 
 const TYPE_ORDER: WorkoutType[] = ['weight', 'running', 'other']
+const TIME_ORDER: Record<string, number> = { 아침: 0, 오전: 0, 점심: 1, 오후: 2, 저녁: 3 }
+
+function workoutOrder(session: WorkoutSession) {
+  const timeLabel = session.title?.split(' ')[0] ?? ''
+  return TIME_ORDER[timeLabel] ?? 4
+}
 
 const MULTI_TYPE_RING: Record<string, string> = {
   'weight-running':
@@ -79,6 +85,12 @@ export default function CalendarPage() {
     list.push(s)
     byDate.set(s.workout_date, list)
   }
+  for (const daySessions of byDate.values()) {
+    daySessions.sort((a, b) => {
+      const timeDifference = workoutOrder(a) - workoutOrder(b)
+      return timeDifference || a.created_at.localeCompare(b.created_at)
+    })
+  }
 
   const firstWeekday = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -134,6 +146,9 @@ export default function CalendarPage() {
           const isSelected = selected === key
           const singleType = types.length === 1 ? types[0] : null
           const singleTypeMeta = singleType ? WORKOUT_TYPE_META[singleType] : null
+          const firstWorkoutMeta = daySessions[0]
+            ? WORKOUT_TYPE_META[daySessions[0].workout_type]
+            : null
           const workoutLabels = types.map((type) => WORKOUT_TYPE_META[type].label).join(', ')
           return (
             <button
@@ -149,7 +164,9 @@ export default function CalendarPage() {
                 >
                   <span
                     className={`flex h-full w-full items-center justify-center rounded-full font-medium transition ${
-                      isSelected ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'
+                      isSelected && firstWorkoutMeta
+                        ? `${firstWorkoutMeta.dot} text-white`
+                        : 'bg-white text-gray-700'
                     }`}
                   >
                     {day}
