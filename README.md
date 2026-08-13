@@ -31,20 +31,6 @@ AI가 추천한 루틴은 답변으로 끝나지 않습니다. 구조화된 추�
 | 운동 기록 관리 | 웨이트 세트·중량·횟수, 러닝 거리·시간·페이스, 기타 운동을 기록합니다. |
 | 캘린더와 통계 | 월별 기록과 주간 운동 시간·웨이트 볼륨·러닝 거리의 변화를 확인합니다. |
 
-## 현재 구현 범위
-
-| 영역 | 구현 내용 | 상태 |
-| --- | --- | --- |
-| 인증 | Supabase 이메일 회원가입·로그인, SSR 세션 갱신, 보호 경로 접근 제어 | 구현 |
-| 운동 프로필 | 목표·숙련도·주 운동·주당 빈도·주의 부위와 AI 코치 성격 설정 | 구현 |
-| 운동 기록 | 웨이트·러닝·기타 기록 생성, 월별/상세 조회, 삭제 | 구현 |
-| 운동 통계 | 이번 주 요약과 4주·8주 운동 시간·웨이트 볼륨·러닝 거리 | 구현 |
-| AI 코칭 | 질문 의도 분류, 사용자 SQL 컨텍스트, OpenAI/Claude 응답 | 구현 |
-| LangChain RAG | 문서 적재·분할·임베딩, pgvector 유사도 검색, 출처 포함 답변 | 구현 |
-| 추천 기록 전환 | 구조화 추천 카드와 운동 기록 폼 자동 채움 | 구현 |
-| 기록 전체 수정 | 공통 정보 수정 API는 있으나 종목·세트 상세 수정 UI는 미구현 | 부분 구현 |
-| 채팅 이력 | 테이블은 준비되어 있으나 대화 저장·복원 API는 미구현 | 후속 과제 |
-
 ## 화면 미리보기
 
 <table>
@@ -93,8 +79,7 @@ AI가 추천한 루틴은 답변으로 끝나지 않습니다. 구조화된 추�
 </p>
 
 <p align="center">
-  <sub><strong>전체 시스템 흐름</strong> — Next.js 프론트엔드, FastAPI의 AI 코칭 오케스트레이션, Supabase 인증·관계형 데이터·pgvector, 외부 AI 모델, 운영자용 RAG 문서 적재 경로의 연결을 나타냅니다. <a href="./docs/fitpt-system-architecture.drawio">draw.io 원본</a></sub>
-</p>
+  <sub><strong>전체 시스템 흐름</strong> — Next.js 프론트엔드, FastAPI의 AI 코칭 오케스트레이션, Supabase 인증·관계형 데이터·pgvector, 외부 AI 모델, 운영자용 RAG 문서 적재 경로의 연결을 나타냅니다. 
 
 - **Next.js 프론트엔드:** Supabase SSR Auth로 로그인 상태를 유지하고, Bearer JWT를 포함해 FastAPI를 호출합니다.
 - **FastAPI 백엔드:** 인증된 사용자 ID를 기준으로 API 요청을 처리하고 Question Router와 `RoutePlan`으로 AI 응답에 필요한 리소스를 결정합니다.
@@ -296,4 +281,3 @@ npm exec tsc -- --noEmit --incremental false
 | 담당 범위 | 서비스 기획, UI 설계, 프론트엔드·백엔드 개발, DB 설계, AI·RAG 구현 |
 | 저장소 | [github.com/kwonup/fit-pt](https://github.com/kwonup/fit-pt) |
 
-현재 운동 기록 생성·조회·삭제, 개인화 AI 코칭, RAG 검색, 추천 루틴의 기록 전환, 통계 화면까지 구현했습니다. 상세 기록 수정 UI, 채팅 이력 복원, RAG 품질 평가 자동화, 브라우저 E2E와 CI/CD는 후속 과제입니다.
