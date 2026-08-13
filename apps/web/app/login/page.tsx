@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { LogIn, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { BrandLogo } from '@/components/brand-logo'
 
 type Mode = 'login' | 'signup'
 
@@ -55,10 +56,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-2xl font-bold text-gray-900">핏피티</h1>
-        <p className="mb-6 text-sm text-gray-500">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white to-blue-50/40 p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <BrandLogo variant="auth" className="mx-auto" />
+        <h1 className="sr-only">핏피티</h1>
+        <p className="mb-6 text-center text-sm text-gray-500">
           {mode === 'login' ? '로그인하고 오늘의 루틴을 받아보세요.' : '계정을 만들고 시작하세요.'}
         </p>
 

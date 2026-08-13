@@ -9,6 +9,7 @@ import { getAccessToken } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/client'
 import { PERSONAS } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
+import { BrandLogo } from '@/components/brand-logo'
 import type { StatsSummary, UserProfile, WeeklyStat } from '@/types'
 
 const fmtMonthDay = (iso: string) => {
@@ -120,7 +121,10 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-lg p-6">
       <header className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">핏피티</h1>
+        <h1>
+          <BrandLogo variant="mark" />
+          <span className="sr-only">핏피티</span>
+        </h1>
         <Button
           onClick={handleLogout}
           disabled={loggingOut}
